@@ -35,6 +35,9 @@ import os
 import sys
 
 CWD = os.path.abspath(os.path.dirname(__file__))
+IGNORE_LIST = [
+	os.path.join(CWD, "autoloads")
+]
 
 def glob_path(path, pattern):
 	result = []
@@ -55,7 +58,8 @@ def identify(name):
 def main():
 	for f in glob_path(os.getcwd(), "__init__.gd"):
 		try:
-			os.remove(f)
+			if os.path.dirname(f) not in IGNORE_LIST:
+				os.remove(f)
 		except e:
 			print("Failed remove file {} \n{}".format(f, e))
 	if not '-c' in sys.argv and not '--clean' in sys.argv:
@@ -63,18 +67,26 @@ def main():
 
 
 def extract_dir(root):
+	if root in IGNORE_LIST:
+		return None
 	pathes = os.listdir(root)
 	content = ""
 	licenseText = open(os.path.join(CWD, 'license')).read()
 
+	delayExtracs = []
 	for p in pathes:
 		path = os.path.join(root,p).replace("./", "").replace(".\\", "")
 		if os.path.isfile(path) and path.endswith(".gd") and not path.endswith('__init__.gd'):
-			content += gen_expression(root, path)
+			if os.path.basename(root) + ".gd" == os.path.basename(path):
+				delayExtracs.append((root, path))
+			else:
+				content += gen_expression(root, path)
 		elif os.path.isdir(path):
 			subdirfile = extract_dir(path)
 			if subdirfile is not None:
 				content += gen_expression(root, subdirfile)
+	for dp in delayExtracs:
+		content += gen_expression(dp[0], dp[1])
 	if len(content) > 0:
 		gdfile = os.path.join(root, '__init__.gd')
 		try:
