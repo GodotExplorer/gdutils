@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 '''
 ---------------------------------------------------------------------------------
 							This file is part of                                
@@ -26,11 +28,13 @@
  SOFTWARE.                                                                      
 ---------------------------------------------------------------------------------
 '''
-# coding=utf-8
+
 import re
 import fnmatch
 import os
 import sys
+
+CWD = os.path.abspath(os.path.dirname(__file__))
 
 def glob_path(path, pattern):
 	result = []
@@ -48,20 +52,20 @@ def identify(name):
 		newname = re.sub('[^\w]', '_', newname)
 	return newname
 
-def main():	
-	for f in glob_path(".", "__init__.gd"):
+def main():
+	for f in glob_path(os.getcwd(), "__init__.gd"):
 		try:
 			os.remove(f)
 		except e:
 			print("Failed remove file {} \n{}".format(f, e))
 	if not '-c' in sys.argv and not '--clean' in sys.argv:
-		extract_dir(".")
+		extract_dir(os.getcwd())
 
 
 def extract_dir(root):
 	pathes = os.listdir(root)
 	content = ""
-	licenseText = open('license').read()
+	licenseText = open(os.path.join(CWD, 'license')).read()
 
 	for p in pathes:
 		path = os.path.join(root,p).replace("./", "").replace(".\\", "")
@@ -74,7 +78,7 @@ def extract_dir(root):
 	if len(content) > 0:
 		gdfile = os.path.join(root, '__init__.gd')
 		try:
-			open(gdfile,'w').write(licenseText + content)
+			open(gdfile,'w').write(licenseText + '\ntool\n' + content)
 		except e:
 			raise e
 		return gdfile
@@ -86,7 +90,10 @@ def gen_expression(root, filepath):
 	name = identify(os.path.basename(path)[:-3])
 	if os.path.basename(path) == '__init__.gd':
 		name = identify(os.path.basename(os.path.dirname(filepath)))
-	return 'const {} = preload("{}")\n'.format(name, path)
+	if os.path.basename(root) + ".gd" == os.path.basename(filepath):
+		return '\n{}\n'.format(open(filepath).read())
+	else:
+		return 'const {} = preload("{}")\n'.format(name, path)
 
 if __name__ == '__main__':
 	main()
