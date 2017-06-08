@@ -129,7 +129,7 @@ class AutoLayoutManager:
 class AutoLayoutConfig:
 	var control = null                      # The Control instance to layout with
 	var fit_mode = FIT_WIDTH                # The scale mode for the control
-	var anchor = FIT_HEIGHT                 # The align mode for the control
+	var anchor = ANCHOR_CENTER              # The align mode for the control
 	var designSize = INVALID_SIZE           # The designed size of the control
 	var designMargin = ZERO_SIZE            # The designed margin of the control to its designed aligment
 
@@ -144,5 +144,9 @@ class AutoLayoutConfig:
 	
 	# Check is same with anothor layout configuration instance
 	func equals(config):
-		return config.control == self.control or config == self.control
-		
+		if config extends get_script():
+			return config.control == self.control
+		elif config extends Control:
+			return config == self.control
+		return false
+	

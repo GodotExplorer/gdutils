@@ -29,8 +29,4 @@
 tool
 extends Node
 
-var gui = preload("gui.gd").new()
 const lib = preload("../__init__.gd")
-
-func _init():
-    add_child(gui)

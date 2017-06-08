@@ -36,7 +36,8 @@ import sys
 
 CWD = os.path.abspath(os.path.dirname(__file__))
 IGNORE_LIST = [
-	os.path.join(CWD, "autoloads")
+	os.path.join(CWD, "autoloads"),
+	os.path.join(CWD, "plugin.gd")
 ]
 
 def glob_path(path, pattern):
@@ -75,7 +76,10 @@ def extract_dir(root):
 
 	delayExtracs = []
 	for p in pathes:
-		path = os.path.join(root,p).replace("./", "").replace(".\\", "")
+		path = os.path.join(root,p)
+		if path in IGNORE_LIST:
+			continue
+		path = path.replace("./", "").replace(".\\", "")
 		if os.path.isfile(path) and path.endswith(".gd") and not path.endswith('__init__.gd'):
 			if os.path.basename(root) + ".gd" == os.path.basename(path):
 				delayExtracs.append((root, path))
