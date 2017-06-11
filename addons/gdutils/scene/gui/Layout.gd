@@ -63,7 +63,7 @@ class AutoLayoutManager:
 			scale = float(window_size.height) / float(ds.height)
 		if fit_mode & FIT_WIDTH:
 			var scale1 = float(window_size.width) / float(ds.width)
-			if scale1 < scale:
+			if scale1 < scale or not fit_mode & UI_FIT_HEIGHT:
 				scale = scale1
 		return scale
 	
