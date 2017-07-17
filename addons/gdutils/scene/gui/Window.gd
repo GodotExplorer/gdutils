@@ -30,24 +30,37 @@ tool
 
 # The window of the game  
 # This class act a manager of the game window  
-class Window:
-	var size = OS.get_window_size() setget set_window_size, get_window_size # The size property of the game window
-	var title = "godot" setget set_window_title                             # The title property of the window
 
-	func _init(title = "", size = Vector2(1024, 600)):
-		self.title = title
-		self.size = size
+# The size property of the game window
+var size = OS.get_window_size() setget set_window_size, get_window_size
 
-	func get_window_size():
-		return OS.get_window_size()
-	
-	func set_window_size(size):
-		if typeof(size) == TYPE_VECTOR2:
-			OS.set_window_size(size)
-	
-	func set_window_title(text):
-		title = str(text)
-		OS.set_window_title(title)
-	
-	func get_window_title():
-		return title
+# The title property of the window
+var title = "" setget set_window_title, get_window_title
+
+# The position property of the window
+var position = Vector2(0, 0) setget set_window_position, get_window_position
+
+func _init(title = "", size = OS.get_window_size()):
+	self.title = title
+	self.size = size
+
+func set_window_size(size):
+	if typeof(size) == TYPE_VECTOR2:
+		OS.set_window_size(size)
+
+func get_window_size():
+	return OS.get_window_size()
+
+func set_window_title(text):
+	title = str(text)
+	OS.set_window_title(title)
+
+func get_window_title():
+	return title
+
+func set_window_position(pos):
+	if typeof(pos) == TYPE_VECTOR2:
+		OS.set_window_position(pos)
+
+func get_window_position():
+	return OS.get_window_position()

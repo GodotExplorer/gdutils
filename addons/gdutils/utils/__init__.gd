@@ -1,5 +1,5 @@
 ##################################################################################
-#    path.gd                                                                     #
+#                        Tool generated DO NOT modify                            #
 ##################################################################################
 #                            This file is part of                                #
 #                                GodotExplorer                                   #
@@ -28,61 +28,11 @@
 
 tool
 
-# Return a list containing the names of the files in the directory.  
-# It does not include the special entries '.' and '..' even if they are present in the directory.
-# - - - - - - - - - -  
-# *Parameters*  
-# * [path:String] The directory to search with  
-# - - - - - - - - - -  
-# *Returns* Array<String>  
-# * The list containing the names of the files in the directory
-# * Return `[]` if failed to search the target directory
-func list_dir(path):
-	var pathes = []
-	var dir = Directory.new()
-	if dir.open(path) == OK:
-		dir.list_dir_begin()
-		var cwd = dir.get_next()
-		while not cwd.empty():
-			if not cwd in ['.', '..']:
-				pathes.append(cwd)
-			cwd = dir.get_next()
-		dir.list_dir_end()
-	return pathes
-
-#  Get file pathes in a list under target folder   
-# - - - - - - - - - -  
-# *Parameters*  
-# * [path:String] The folder to search from  
-# * [with_dirs:bool = false] Includes directories  
-# * [recurse:String = false] Search sub-folders recursely  
-# - - - - - - - - - -  
-# *Returns* Array<String>  
-# * File pathes in an array
-static func list_files(path, with_dirs=false,recurse=false):
-	var files = []
-	var dir = Directory.new()
-	if dir.open(path) == OK:
-		dir.list_dir_begin()
-		var file_name = dir.get_next()
-		while not file_name.empty():
-			if dir.current_is_dir() and not (file_name in [".", "..", "./"]):
-				if recurse:
-					var childfiles = list_files(str(path, "/", file_name), with_dirs, recurse)
-					for f in childfiles:
-						files.append(f)
-			if not (file_name in [".", ".."]):
-				var rpath = path
-				if rpath.ends_with("/"):
-					pass
-				elif rpath == ".":
-					rpath = ""
-				else:
-					rpath += "/"
-				if not with_dirs and dir.current_is_dir():
-					pass
-				else:
-					rpath = str(rpath, file_name).replace("/./", "/")
-					files.append(rpath)
-			file_name = dir.get_next()
-	return files
+static func implements(obj, interface= {}):
+	if obj == null or interface == null:
+		return false
+	if not (typeof(obj) == TYPE_OBJECT):
+		return false
+	if typeof(interface) == TYPE_OBJECT and obj is interface:
+		return true
+	return false

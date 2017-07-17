@@ -56,14 +56,14 @@ class AutoLayoutManager:
 	
 		var ds = designScreenSize
 		if ds == INVALID_SIZE:
-			ds = Vector2(Globals.get("display/width"), Globals.get("display/height"))
+			ds = Vector2(GlobalConfig.get("display/width"), GlobalConfig.get("display/height"))
 		var window_size = OS.get_window_size()
 	
 		if fit_mode & FIT_HEIGHT:
 			scale = float(window_size.height) / float(ds.height)
 		if fit_mode & FIT_WIDTH:
 			var scale1 = float(window_size.width) / float(ds.width)
-			if scale1 < scale or not fit_mode & UI_FIT_HEIGHT:
+			if scale1 < scale or not fit_mode & FIT_HEIGHT:
 				scale = scale1
 		return scale
 	
@@ -95,7 +95,7 @@ class AutoLayoutManager:
 	
 	# Process layuot and scale for managed controls
 	func _process_layout(layout):
-		if not layout.control extends Control or not layout.control.is_visible():
+		if not layout.control is Control or not layout.control.is_visible():
 			return
 		var scale = get_scale_ratio(layout.fit_mode)
 		var margin = layout.designMargin * scale
@@ -104,11 +104,11 @@ class AutoLayoutManager:
 		var parent = layout.control.get_parent()
 		if parent != null:
 			var p_size = Vector2()
-			if parent extends Control:
+			if parent is Control:
 				p_size = parent.get_size()
-			elif parent extends Viewport:
+			elif parent is Viewport:
 				p_size = parent.get_rect().size
-			elif parent extends CanvasItem:
+			elif parent is CanvasItem:
 				p_size = parent.get_item_rect().size
 			var size = layout.designSize * scale
 			if layout.anchor & ANCHOR_LEFT:
@@ -139,14 +139,14 @@ class AutoLayoutConfig:
 		self.anchor = anchor
 		self.designSize = designSize
 		if designSize == INVALID_SIZE:
-			self.designSize = Vector2(Globals.get("display/width"), Globals.get("display/height"))
+			self.designSize = Vector2(GlobalConfig.get("display/width"), GlobalConfig.get("display/height"))
 		self.designMargin = designMargin
 	
 	# Check is same with anothor layout configuration instance
 	func equals(config):
-		if config extends get_script():
+		if config is get_script():
 			return config.control == self.control
-		elif config extends Control:
+		elif config is Control:
 			return config == self.control
 		return false
 	

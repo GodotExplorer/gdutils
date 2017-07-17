@@ -28,6 +28,9 @@
 
 tool
 extends Reference
+
+const __Utils = preload("../../utils/__init__.gd")
+
 var title = ""				# The title of the menu item
 var _parent = null			# The parent menu item
 var _submenus = []			# Submenus
@@ -74,7 +77,7 @@ func clone():
 		menu.add_submenu(sm.clone())
 	return menu
 
-# Get parent menu
+# Get parent menu  
 # @return [Menu] The parent menu instance
 func get_parent():
 	if _parent != null:
@@ -85,9 +88,11 @@ func get_parent():
 # @param [menu:Menu] The child menu item
 # @return [Menu] return self
 func add_submenu(menu):
-	if menu != self:
+	if __Utils.implements(menu, get_script()):
 		menu._parent = self
 		_submenus.append(menu)
+	elif typeof(menu) == TYPE_STRING:
+		_submenus.append(get_script().new(menu))
 	sort_children()
 	return self
 
@@ -122,6 +127,9 @@ func get_child(p_title):
 			return m
 	return null
 
+# Get children menu items  
+# - - - - - - - - - -  
+# *Returns* Array<Menu>  
 func get_children():
 	return self._submenus
 
@@ -161,7 +169,7 @@ func make_popup_menu():
 func render_to_popup(popup, base_path = "$_root_$"):
 	if base_path == "$_root_$":
 		base_path = get_path()
-	if not _submenus.empty() and popup extends PopupMenu:
+	if not _submenus.empty() and popup is PopupMenu:
 		popup.connect("item_pressed", self, "_on_item_pressed", [popup])
 		var __menu_id = 0
 		for submenu in _submenus:

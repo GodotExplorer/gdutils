@@ -94,7 +94,10 @@ def extract_dir(root):
 	if len(content) > 0:
 		gdfile = os.path.join(root, '__init__.gd')
 		try:
-			open(gdfile,'w').write(licenseText + '\ntool\n' + content)
+			toolprefix = '\ntool\n'
+			if root == CWD:
+				toolprefix += 'extends Node\n\n'
+			open(gdfile,'w').write(licenseText + toolprefix + content)
 		except e:
 			raise e
 		return gdfile
