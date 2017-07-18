@@ -36,6 +36,7 @@ import sys
 
 CWD = os.path.abspath(os.path.dirname(__file__))
 IGNORE_LIST = [
+	os.path.join(CWD, ".vscode"),
 	os.path.join(CWD, "autoloads"),
 	os.path.join(CWD, "plugin.gd")
 ]
@@ -72,7 +73,7 @@ def extract_dir(root):
 		return None
 	pathes = os.listdir(root)
 	content = ""
-	licenseText = open(os.path.join(CWD, 'license')).read()
+	licenseText = open(os.path.join(CWD, 'LICENSE')).read()
 
 	delayExtracs = []
 	for p in pathes:
