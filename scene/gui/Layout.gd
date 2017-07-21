@@ -56,7 +56,7 @@ class AutoLayoutManager:
 	
 		var ds = designScreenSize
 		if ds == INVALID_SIZE:
-			ds = Vector2(GlobalConfig.get("display/width"), GlobalConfig.get("display/height"))
+			ds = Vector2(ProjectSettings.get("display/window/size/width"), ProjectSettings.get("display/window/size/height"))
 		var window_size = OS.get_window_size()
 	
 		if fit_mode & FIT_HEIGHT:
@@ -139,7 +139,7 @@ class AutoLayoutConfig:
 		self.anchor = anchor
 		self.designSize = designSize
 		if designSize == INVALID_SIZE:
-			self.designSize = Vector2(GlobalConfig.get("display/width"), GlobalConfig.get("display/height"))
+			self.designSize = Vector2(ProjectSettings.get("display/window/size/width"), ProjectSettings.get("display/window/size/height"))
 		self.designMargin = designMargin
 	
 	# Check is same with anothor layout configuration instance
