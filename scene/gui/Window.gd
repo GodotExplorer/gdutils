@@ -43,6 +43,7 @@ var position = Vector2(0, 0) setget set_window_position, get_window_position
 func _init(title = "", size = OS.get_window_size()):
 	self.title = title
 	self.size = size
+	OS.set_window_position((OS.get_screen_size() - size) / 2.0)
 
 func set_window_size(size):
 	if typeof(size) == TYPE_VECTOR2:
