@@ -27,6 +27,7 @@
 ##################################################################################
 
 tool
+const json = preload("json.gd")
 
 static func implements(obj, interface= {}):
 	if obj == null or interface == null:
