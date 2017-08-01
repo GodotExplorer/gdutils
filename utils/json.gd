@@ -39,7 +39,7 @@ static func load_json(json_path):
 	var file = File.new()
 	if OK == file.open(json_path, File.READ):
 		return parse_json(file.get_as_text())
-	return null
+	return {}
 
 # Save dictionary into json file  
 # - - - - - - - - - -  
@@ -95,3 +95,43 @@ static func get_elements(ds, format= {}):
 		return res
 	else:
 		return null
+
+# Dulicate a dictionary  
+# - - -  
+# **Parameters**  
+# * dict: Dictionary The dictionary to duplicate  
+# - - -  
+# **Returns**  
+# * Dictionary The duplicated dictionary instance  
+static func duplicate(dict):
+	if typeof(dict) == TYPE_DICTIONARY:
+		return bytes2var(var2bytes(dict))
+	else:
+		return dict
+
+enum {
+	MERGE_OVERRIDE,		# override exist data
+	MERGE_KEEP		 	# keep exist data
+}
+
+# Merge two dictionaries into one  
+# None of the input parmameters would be changed    
+# - - -  
+# **Parameters**  
+# * src_data: Dictionary The source dictionary to merge  
+# * new_data: Dictionary The new dictionary that will be merge to `src_data`  
+# * strategy: `MERGE_KEEP | MERGE_OVERRIDE` The merge strategy for both two dictionary have save key
+# 	* MERGE_KEEP : Keep values in `src_data`  
+# 	* MERGE_OVERRIDE : Use values in `new_data`  
+# - - -  
+# **Returns**  
+# * Dictionary The new merged dictionary   
+static func merge(src_data, new_data, strategy = MERGE_OVERRIDE):
+	if typeof(src_data) == TYPE_DICTIONARY and typeof(new_data) == TYPE_DICTIONARY:
+		var ret = bytes2var(var2bytes(src_data))
+		for key in new_data:
+			if not ret.has(key) or strategy == MERGE_OVERRIDE:
+				ret[key] = new_data[key]
+		return ret
+	else:
+		return src_data
