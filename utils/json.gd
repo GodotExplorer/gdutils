@@ -135,3 +135,39 @@ static func merge(src_data, new_data, strategy = MERGE_OVERRIDE):
 		return ret
 	else:
 		return src_data
+
+# Serialize script instance to a dictionary that could be save to json  
+# - - -  
+# **Parameters**  
+# * inst: ScriptInstance The script instance to serialize with  
+# - - -  
+# **Returns**  
+# * Dictionary The serialized dictionary of the instance
+static func serialize_instance(inst):
+	var ret = inst
+	if typeof(inst) == TYPE_OBJECT and inst.get_script() != null:
+		var dict = inst2dict(inst)
+		for key in dict:
+			var prop = dict[key]
+			if typeof(prop) == TYPE_OBJECT:
+				dict[key] = serialize_instance(prop)
+		ret = dict
+	return ret
+
+# Unserialize script instance from a dictionary that serialized with `serialize_instance`  
+# - - -  
+# **Parameters**  
+# * dict: Dictionary The dictionary to unserialize with  
+# - - -  
+# **Returns**  
+# * ScriptInstance The unserialized object instance
+static func unserialize_instance(dict):
+	var ret = dict
+	if typeof(dict) == TYPE_DICTIONARY:
+		for key in dict:
+			var prop = dict[key]
+			if typeof(prop) == TYPE_DICTIONARY:
+				dict[key] = unserialize_instance(prop)
+		if dict.has("@path") and dict.has("@subpath"):
+			ret = dict2inst(dict)
+	return ret
