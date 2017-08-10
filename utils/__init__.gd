@@ -27,6 +27,7 @@
 ##################################################################################
 
 tool
+const csv = preload("csv.gd")
 const json = preload("json.gd")
 
 static func implements(obj, interface= {}):
