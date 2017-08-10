@@ -149,9 +149,15 @@ static func serialize_instance(inst):
 		var dict = inst2dict(inst)
 		for key in dict:
 			var prop = dict[key]
-			if typeof(prop) == TYPE_OBJECT:
-				dict[key] = serialize_instance(prop)
+			dict[key] = serialize_instance(prop)
 		ret = dict
+	elif typeof(inst) == TYPE_ARRAY:
+		ret = []
+		for ele in inst:
+			ret.append(serialize_instance(ele))
+	elif typeof(inst) == TYPE_DICTIONARY:
+		for key in inst:
+			inst[key] = serialize_instance(inst[key])
 	return ret
 
 # Unserialize script instance from a dictionary that serialized with `serialize_instance`  
@@ -163,11 +169,16 @@ static func serialize_instance(inst):
 # * ScriptInstance The unserialized object instance
 static func unserialize_instance(dict):
 	var ret = dict
-	if typeof(dict) == TYPE_DICTIONARY:
+	if typeof(dict) == TYPE_REAL and int(dict) == dict:
+		ret = int(dict)
+	elif typeof(dict) == TYPE_DICTIONARY:
 		for key in dict:
 			var prop = dict[key]
-			if typeof(prop) == TYPE_DICTIONARY:
-				dict[key] = unserialize_instance(prop)
+			dict[key] = unserialize_instance(prop)
 		if dict.has("@path") and dict.has("@subpath"):
 			ret = dict2inst(dict)
+	elif typeof(dict) == TYPE_ARRAY:
+		ret = []
+		for ele in dict:
+			ret.append(unserialize_instance(ele))
 	return ret
