@@ -31,6 +31,8 @@ extends EditorPlugin
 
 func _enter_tree():
 	add_custom_type("AutoLayoutControl", "Control", preload("scene/gui/AutoLayoutControl.gd"), null)
+	add_custom_type("ItemListEnhanced", "Control", preload("scene/gui/ItemListEnhanced.gd"), null)
 
 func _exit_tree():
 	remove_custom_type("AutoLayoutControl")
+	remove_custom_type("ItemListEnhanced")
