@@ -37,7 +37,7 @@ tool
 # *Returns* Array<String>  
 # * The list containing the names of the files in the directory
 # * Return `[]` if failed to search the target directory
-func list_dir(path):
+static func list_dir(path):
 	var pathes = []
 	var dir = Directory.new()
 	if dir.open(path) == OK:
