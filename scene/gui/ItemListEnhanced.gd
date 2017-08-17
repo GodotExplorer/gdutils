@@ -81,6 +81,15 @@ func update_list():
 					set_item_custom_bg_color(index, color)
 				index += 1
 
+# Update target item of in the list
+func update_item(p_item):
+	for id in range(get_item_count()):
+		if p_item == get_item_metadata(id):
+			set_item_text(id, provider.get_item_text(p_item))
+			set_item_custom_bg_color(id, provider.get_item_background_color(p_item))
+			set_item_icon(id, provider.get_item_icon(p_item))
+			break
+
 # Get selected item data in an array
 func get_selected_item_list():
 	var _items = []

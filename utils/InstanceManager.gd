@@ -1,5 +1,5 @@
 ##################################################################################
-#                        Tool generated DO NOT modify                            #
+#  InstanceManager                            									 #
 ##################################################################################
 #                            This file is part of                                #
 #                                GodotExplorer                                   #
@@ -27,15 +27,77 @@
 ##################################################################################
 
 tool
-const csv = preload("csv.gd")
-const InstanceManager = preload("InstanceManager.gd")
-const json = preload("json.gd")
+const json = preload('json.gd')
+var pool = {}
+var data = {}
 
-static func implements(obj, interface= {}):
-	if obj == null or interface == null:
-		return false
-	if not (typeof(obj) == TYPE_OBJECT):
-		return false
-	if typeof(interface) == TYPE_OBJECT and obj is interface:
-		return true
-	return false
+func put(key, value):
+    data[key] = serialize_instance(value)
+
+func get(key):
+	if data.has(key):
+		return data[key]
+	return .get(key)
+
+func serialize_instance(inst):
+	var ret = inst
+	if typeof(inst) == TYPE_OBJECT and inst.get_script() != null:
+		if not self.pool.has(inst.get_instance_id()):
+			var dict = inst2dict(inst)
+			self.pool[inst.get_instance_id()] = dict
+			for key in dict:
+				dict[key] = serialize_instance(dict[key])
+			self.pool[inst.get_instance_id()] = dict
+		ret = str("Object:", inst.get_instance_id())
+	elif typeof(inst) == TYPE_ARRAY:
+		ret = []
+		for ele in inst:
+			ret.append(serialize_instance(ele))
+	elif typeof(inst) == TYPE_DICTIONARY:
+		for key in inst:
+			inst[key] = serialize_instance(inst[key])
+	return ret
+
+func unserialize_instance(any, rawPool):
+	var ret = any
+	if typeof(any) == TYPE_REAL:
+		if int(any) == any:
+			ret = int(any)
+	elif typeof(any) == TYPE_STRING and any.begins_with("Object:"):
+		var id  = int(any.substr("Object:".length(), any.length()))
+		if self.pool.has(id):
+			ret = self.pool[id]
+		else:
+			self.pool[id] = null
+			ret = unserialize_instance(rawPool[str(id)], rawPool)
+			self.pool[id] = ret
+	elif typeof(any) == TYPE_DICTIONARY:
+		for key in any:
+			var prop = any[key]
+			any[key] = unserialize_instance(prop, rawPool)
+		if any.has("@path") and any.has("@subpath"):
+			ret = dict2inst(any)
+	elif typeof(any) == TYPE_ARRAY:
+		ret = []
+		for ele in any:
+			ret.append(unserialize_instance(ele, rawPool))
+	return ret
+
+func load(path):
+	self.pool.clear()
+	self.data.clear()
+	var dict = json.load_json(path)
+	if dict.has("Objects"):
+		var poolDict = dict["Objects"]
+		for id in poolDict:
+			if not int(id) in self.pool:
+				self.pool[int(id)] = unserialize_instance(poolDict[id], poolDict)
+		if dict.has("data"):
+			var dataDict = dict["data"]
+			for key in dataDict:
+				self.data[key] = unserialize_instance(dataDict[key], poolDict)
+		return OK
+	return ERR_PARSE_ERROR
+
+func save(path):
+	return json.save_json({"Objects": pool, "data": data }, path)
