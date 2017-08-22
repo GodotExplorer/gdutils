@@ -86,3 +86,76 @@ static func list_files(path, with_dirs=false,recurse=false):
 					files.append(rpath)
 			file_name = dir.get_next()
 	return files
+
+# Join two or more path components intelligently.  
+# The return value is the concatenation of path and any members of rest parameters
+# with exactly one directory separator `/` 
+# *Parameters*  
+# * [`p0~p9`:String] The paths
+# - - - - - - - - - -  
+# *Returns* String
+# * The returen path is `normalized`
+static func join(p0, p1, p2='', p3='', p4='', p5='', p6='', p7='', p8='', p9=''):
+	var args = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9]
+	var path = ""
+	var index = -1
+	for p in args:
+		index += 1
+		p = normalize(p)
+		if p.empty():
+			continue
+		var sep = '/'
+		if path.ends_with('/') or p.begins_with('/') or index <= 0:
+			sep = ''
+		path += str(sep, p)
+	return path
+
+# Check is the path is under target directory  
+# This just simple check with file path strings so it won't check the file or 
+#	directory in your file system
+# - - - - - - - - - -  
+# *Parameters*  
+# * [path:String] The file path  
+# * [dir:String] The parent directory path  
+# - - - - - - - - - -  
+# *Returns* bool  
+# * Is the file with `path`	is under the directory ` dir`
+static func path_under_dir(path, dir):
+	var d = normalize(dir)
+	if not d.ends_with('/'):
+		d += '/'
+	var p = normalize(path)
+	return p.begins_with(d) and p != d
+
+#  Get sub-path from the parent directory  
+# - - - - - - - - - -  
+# *Parameters*  
+# * [path:String] The file path  
+# * [dir:String] The parent directory path  
+# - - - - - - - - - -  
+# *Returns* String
+# * The sub-path string
+static func relative_to_parent_dir(path, dir):
+	var p = path
+	if path_under_dir(p, dir):
+		p = normalize(p)
+		var d = normalize(dir) + '/'
+		p = p.substr(d.length(), p.length())
+	return p
+
+#  Normalize the file path this file replace all `\`  and `//` to `/ `  
+# - - - - - - - - - -  
+# *Parameters*  
+# * [p_path:String] The file path to normalize to  
+# - - - - - - - - - -  
+# *Returns* String
+# * The formated string
+static func normalize(p_path):
+	var replacement = {
+		'\\': '/',
+		'//': '/'
+	}
+	var path = p_path
+	for key in replacement:
+		path = path.replace(key, replacement[key])
+	return path
