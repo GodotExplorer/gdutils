@@ -1,5 +1,5 @@
 ##################################################################################
-#  InstanceManager                            									 #
+#  InstanceManager.gd                            								 #
 ##################################################################################
 #                            This file is part of                                #
 #                                GodotExplorer                                   #
@@ -28,37 +28,83 @@
 
 tool
 const json = preload('json.gd')
-var pool = {}
-var data = {}
+var pool   = {}
+var data   = {}
 
-func put(key, value):
-    data[key] = serialize_instance(value)
+# Put data for saving  
+# Note: The key is converted into String so please make it as simple as possiable  
+# - - -  
+# **Parameters**  
+# * p_key: Variant The key is string value expected  
+# * value: Variant The data to save with  
+func put(p_key, value):
+	data[str(p_key)] = _serialize(value)
 
-func get(key):
+# Get loaded data by a key  
+# - - -  
+# **Parameters**  
+# * p_key: Variant The key of the data was saved  
+# - - -  
+# **Returns**  
+# * Variant
+func get(p_key):
+	var key = str(p_key)
 	if data.has(key):
 		return data[key]
 	return .get(key)
 
-func serialize_instance(inst):
+# Load the saved json file  
+func load(path):
+	self.pool.clear()
+	self.data.clear()
+	var dict = json.load_json(path)
+	if dict.has("Objects"):
+		# Step1: unserialize all the objects into the poll
+		# 	Some of the objects after this step may not be completely unserialized
+		#   as they are circle referenced
+		var poolDict = dict["Objects"]
+		for id in poolDict:
+			if not int(id) in self.pool:
+				self.pool[int(id)] = _unserialize(poolDict[id], poolDict)
+		# Step2: To resovle all objects that is not comletely unserialized in the poll
+		#		After step1 all object should be able to referenced to now
+		for id in self.pool:
+			_setup_references(self.pool[id])
+		# Step3: Unserailize the data user saved
+		if dict.has("data"):
+			var dataDict = dict["data"]
+			for key in dataDict:
+				self.data[key] = _unserialize(dataDict[key], poolDict)
+		return OK
+	return ERR_PARSE_ERROR
+
+# Save all data into json
+func save(path):
+	return json.save_json({"Objects": pool, "data": data }, path)
+
+##################################################
+# private methods
+#################################################
+
+func _serialize(inst):
 	var ret = inst
 	if typeof(inst) == TYPE_OBJECT and inst.get_script() != null:
 		if not self.pool.has(inst.get_instance_id()):
 			var dict = inst2dict(inst)
 			self.pool[inst.get_instance_id()] = dict
 			for key in dict:
-				dict[key] = serialize_instance(dict[key])
-			self.pool[inst.get_instance_id()] = dict
+				dict[key] = _serialize(dict[key])
 		ret = str("Object:", inst.get_instance_id())
 	elif typeof(inst) == TYPE_ARRAY:
 		ret = []
 		for ele in inst:
-			ret.append(serialize_instance(ele))
+			ret.append(_serialize(ele))
 	elif typeof(inst) == TYPE_DICTIONARY:
 		for key in inst:
-			inst[key] = serialize_instance(inst[key])
+			inst[key] = _serialize(inst[key])
 	return ret
 
-func unserialize_instance(any, rawPool):
+func _unserialize(any, rawPool):
 	var ret = any
 	if typeof(any) == TYPE_REAL:
 		if int(any) == any:
@@ -68,36 +114,39 @@ func unserialize_instance(any, rawPool):
 		if self.pool.has(id):
 			ret = self.pool[id]
 		else:
-			self.pool[id] = null
-			ret = unserialize_instance(rawPool[str(id)], rawPool)
+			self.pool[id] = any
+			var instDict = rawPool[str(id)]
+			ret = _unserialize(instDict, rawPool)
 			self.pool[id] = ret
 	elif typeof(any) == TYPE_DICTIONARY:
 		for key in any:
 			var prop = any[key]
-			any[key] = unserialize_instance(prop, rawPool)
+			any[key] = _unserialize(prop, rawPool)
 		if any.has("@path") and any.has("@subpath"):
 			ret = dict2inst(any)
 	elif typeof(any) == TYPE_ARRAY:
 		ret = []
 		for ele in any:
-			ret.append(unserialize_instance(ele, rawPool))
+			ret.append(_unserialize(ele, rawPool))
 	return ret
 
-func load(path):
-	self.pool.clear()
-	self.data.clear()
-	var dict = json.load_json(path)
-	if dict.has("Objects"):
-		var poolDict = dict["Objects"]
-		for id in poolDict:
-			if not int(id) in self.pool:
-				self.pool[int(id)] = unserialize_instance(poolDict[id], poolDict)
-		if dict.has("data"):
-			var dataDict = dict["data"]
-			for key in dataDict:
-				self.data[key] = unserialize_instance(dataDict[key], poolDict)
-		return OK
-	return ERR_PARSE_ERROR
-
-func save(path):
-	return json.save_json({"Objects": pool, "data": data }, path)
+func _setup_references(inst):
+	if typeof(inst) == TYPE_OBJECT:
+		for propDesc in inst.get_property_list():
+			var prop = inst.get(propDesc.name)
+			match typeof(prop):
+				TYPE_STRING:
+					if prop.begins_with("Object:"):
+						var id = int(prop.substr("Object:".length(), prop.length()))
+						if self.pool.has(id):
+							inst.set(propDesc.name, self.pool[id])
+				# We don't really need that as this method is target for atomic objects in pool
+				# And this may cause stack overflow error
+				# TYPE_OBJECT:
+				# 	_setup_references(prop)
+				TYPE_ARRAY:
+					for ele in prop:
+						_setup_references(ele)
+				TYPE_DICTIONARY:
+					for key in prop:
+						_setup_references(prop[key])
