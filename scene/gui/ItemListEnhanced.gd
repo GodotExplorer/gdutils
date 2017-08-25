@@ -55,6 +55,14 @@ func _set_filter(f):
 	filter = f
 	update_list()
 
+
+# Emited while wating action trigged with the list view
+signal on_action_pressed(action)
+
+# Event gui actions to watch with  
+# Type: Array<String|InputEvent>  actions to watch
+var watching_actions = []
+
 # Force update the item list  
 # This action will clear and re-order the items
 func update_list():
@@ -105,6 +113,16 @@ func _gui_input(event):
 			emit_signal("mouse_right_clicked")
 		elif event.doubleclick:
 			emit_signal("double_clicked")
+	if event.is_pressed():
+		for action in watching_actions:
+			if typeof(action) == TYPE_STRING:
+				if event.is_action(action):
+					emit_signal("on_action_pressed", action)
+					break
+			elif typeof(action) == TYPE_OBJECT and action is InputEvent:
+				if event.action_match(action):
+					emit_signal("on_action_pressed", action)
+					break
 
 # The provider class for ItemList  
 # The provider decide how the data source is shown in the item list
