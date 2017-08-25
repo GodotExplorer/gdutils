@@ -53,6 +53,8 @@ static func save_json(dict, path):
 	var err = OK
 	if dict == null or typeof(dict) != TYPE_DICTIONARY or path == null or typeof(path) != TYPE_STRING:
 		err = ERR_INVALID_PARAMETER
+	if not Directory.new().dir_exists(path.get_base_dir()):
+		Directory.new().make_dir_recursive(path.get_base_dir())
 	var f = File.new()
 	err = f.open(path, File.WRITE)
 	if OK == err:
