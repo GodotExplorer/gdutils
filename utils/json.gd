@@ -184,3 +184,15 @@ static func unserialize_instance(dict):
 		for ele in dict:
 			ret.append(unserialize_instance(ele))
 	return ret
+
+# Deep clone a script instance, a dictionary or an array
+# - - -  
+# **Parameters**  
+# * inst: <Dictionary|GDInstance|Array> The data to copy from
+# - - -  
+# **Returns** 
+# The same structured data cloned from inst
+static func deep_clone_instance(inst):
+	var dict = serialize_instance(inst)
+	var newdict = parse_json(to_json(dict))
+	return unserialize_instance(newdict)
