@@ -36,6 +36,9 @@ tool
 # **Returns**  
 # * ImageTexture | null
 static func load_external_image_texture(path):
+    var tryTex = load(path)
+    if typeof(tryTex) == TYPE_OBJECT and tryTex != null and tryTex is Texture:
+        return tryTex
     var img = Image.new()
     if OK == img.load(path):
         var tex = ImageTexture.new()
