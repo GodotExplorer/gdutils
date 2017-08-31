@@ -98,6 +98,25 @@ func update_item(p_item):
 			set_item_icon(id, provider.get_item_icon(p_item))
 			break
 
+# Select items, the items selected before will be unselected  
+# items: Array<Variant> items to select
+func selecte_items(p_items):
+	if typeof(p_items) != TYPE_ARRAY:
+		p_items = [p_items]
+	for id in get_selected_items():
+		unselect(id)
+	var single = p_items.size() > 1
+	var selected = false
+	for item in p_items:
+		for i in range(get_item_count()):
+			if get_item_metadata(i) == item:
+				select(i, single)
+				selected = true
+				if single:
+					break
+		if single and selected:
+			break
+
 # Get selected item data in an array
 func get_selected_item_list():
 	var _items = []
