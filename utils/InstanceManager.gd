@@ -55,9 +55,20 @@ func get(p_key):
 
 # Load the saved json file  
 func load(path):
+	return parse_serialized_dict(json.load_json(path))
+
+# Save all data into json
+func save(path):
+	return json.save_json(serialize_to_dict(), path)
+
+# Get a dictionary that contains all serialized instances
+func serialize_to_dict():
+	return {"Objects": pool, "data": data }
+
+# parse intances from serialized dictionary
+func parse_serialized_dict(dict):
 	self.pool.clear()
 	self.data.clear()
-	var dict = json.load_json(path)
 	if dict.has("Objects"):
 		# Step1: unserialize all the objects into the poll
 		# 	Some of the objects after this step may not be completely unserialized
@@ -67,7 +78,7 @@ func load(path):
 			if not int(id) in self.pool:
 				self.pool[int(id)] = _unserialize(poolDict[id], poolDict)
 		# Step2: To resovle all objects that is not comletely unserialized in the poll
-		#		After step1 all object should be able to referenced to now
+		#	After step1 all object should be able to referenced to now
 		for id in self.pool:
 			_setup_references(self.pool[id])
 		# Step3: Unserailize the data user saved
@@ -78,9 +89,20 @@ func load(path):
 		return OK
 	return ERR_PARSE_ERROR
 
-# Save all data into json
-func save(path):
-	return json.save_json({"Objects": pool, "data": data }, path)
+# Deep clone a script instance, a dictionary or an array
+# - - -  
+# **Parameters**  
+# * inst: <Dictionary|GDInstance|Array> The data to copy from
+# - - -  
+# **Returns** 
+# The same structured data cloned from inst
+func deep_clone_instance(inst):
+	var im = get_script().new()
+	im.put("o", inst)
+	var im2 = get_script().new()
+	if OK == im2.parse_serialized_dict(parse_json(to_json(im.serialize_to_dict()))):
+		return im2.get("o")
+	return null
 
 ##################################################
 # private methods
@@ -131,22 +153,22 @@ func _unserialize(any, rawPool):
 	return ret
 
 func _setup_references(inst):
+	var ret = inst
 	if typeof(inst) == TYPE_OBJECT:
 		for propDesc in inst.get_property_list():
 			var prop = inst.get(propDesc.name)
-			match typeof(prop):
-				TYPE_STRING:
-					if prop.begins_with("Object:"):
-						var id = int(prop.substr("Object:".length(), prop.length()))
-						if self.pool.has(id):
-							inst.set(propDesc.name, self.pool[id])
-				# We don't really need that as this method is target for atomic objects in pool
-				# And this may cause stack overflow error
-				# TYPE_OBJECT:
-				# 	_setup_references(prop)
-				TYPE_ARRAY:
-					for ele in prop:
-						_setup_references(ele)
-				TYPE_DICTIONARY:
-					for key in prop:
-						_setup_references(prop[key])
+			if typeof(prop) in [TYPE_STRING, TYPE_ARRAY, TYPE_DICTIONARY]:
+				inst.set(propDesc.name, _setup_references(prop))
+	elif typeof(inst) == TYPE_STRING and inst.begins_with("Object:"):
+		var id = int(inst.substr("Object:".length(), inst.length()))
+		if self.pool.has(id):
+			ret = self.pool[id]
+	elif typeof(inst) == TYPE_ARRAY:
+		ret = []
+		for ele in inst:
+			ret.append(_setup_references(ele))
+	elif typeof(inst) == TYPE_DICTIONARY:
+		ret = {}
+		for key in inst:
+			ret[key] = _setup_references(inst[key])
+	return ret
