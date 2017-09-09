@@ -77,6 +77,7 @@ func parse_serialized_dict(dict):
 		for id in poolDict:
 			if not int(id) in self.pool:
 				self.pool[int(id)] = _unserialize(poolDict[id], poolDict)
+				self.pool[int(id)].set_meta("ObjectID", int(id))
 		# Step2: To resovle all objects that is not comletely unserialized in the poll
 		#	After step1 all object should be able to referenced to now
 		for id in self.pool:
@@ -122,8 +123,9 @@ func _serialize(inst):
 		for ele in inst:
 			ret.append(_serialize(ele))
 	elif typeof(inst) == TYPE_DICTIONARY:
+		ret = {}
 		for key in inst:
-			inst[key] = _serialize(inst[key])
+			ret[key] = _serialize(inst[key])
 	return ret
 
 func _unserialize(any, rawPool):
