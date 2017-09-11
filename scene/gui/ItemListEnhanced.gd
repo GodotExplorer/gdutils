@@ -36,10 +36,23 @@ signal mouse_right_clicked()
 # The provider of the item list it decides how the data is shown in the list
 var provider = ListItemProvider.new() setget _set_provider
 func _set_provider(p):
-	# FIXME: GDScript BUG : https://github.com/godotengine/godot/issues/10304
-	if typeof(p) == TYPE_OBJECT :#and p is ListItemProvider:
+	if typeof(p) == TYPE_OBJECT and p is ListItemProvider:
 		provider = p
 		update_list()
+
+var menu_handler = MenuActionHandler.new() setget _set_menu_handler
+var _popupmenu = null
+func _set_menu_handler(h):
+	menu_handler = h
+	if _popupmenu != null:
+		_popupmenu.queue_free()
+		remove_child(_popupmenu)
+		_popupmenu = null
+	if typeof(h) == TYPE_OBJECT and h is MenuActionHandler:
+		_popupmenu = h.create_popupmenu()
+		if _popupmenu != null:
+			_popupmenu.connect("id_pressed", menu_handler, "id_pressed")
+			add_child(_popupmenu)
 
 # Arrary<Variant>  
 # The item data source of the list
@@ -125,13 +138,20 @@ func get_selected_item_list():
 	return _items
 
 func _gui_input(event):
+	var selectedItems = get_selected_items()
+	# Mouse button actions
 	if event is InputEventMouseButton:
-		if get_selected_items().size() > 0:
-			return
 		if event.button_index == BUTTON_RIGHT and not event.pressed:
+			if _popupmenu != null:
+				_popupmenu.set_global_position(get_global_mouse_position())
+				for i in range(_popupmenu.get_item_count()):
+					var id = _popupmenu.get_item_id(i)
+					_popupmenu.set_item_disabled(i, not menu_handler.item_enabled(id, selectedItems))
+				_popupmenu.popup()
 			emit_signal("mouse_right_clicked")
 		elif event.doubleclick:
 			emit_signal("double_clicked")
+	# Watching actions
 	if event.is_pressed():
 		for action in watching_actions:
 			if typeof(action) == TYPE_STRING:
@@ -142,6 +162,15 @@ func _gui_input(event):
 				if event.action_match(action):
 					emit_signal("on_action_pressed", action)
 					break
+	# Popupmenu shortcuts
+	if event.is_pressed() and _popupmenu != null:
+		for i in range(_popupmenu.get_item_count()):
+			var id = _popupmenu.get_item_id(i)
+			var shortcut = _popupmenu.get_item_shortcut(i)
+			if shortcut != null and shortcut is ShortCut and event.action_match(shortcut.shortcut):
+				if not _popupmenu.is_item_disabled(i):
+					menu_handler.id_pressed(id)
+
 
 # The provider class for ItemList  
 # The provider decide how the data source is shown in the item list
@@ -184,3 +213,15 @@ class ListItemProvider:
 
 	func get_item_background_color(p_item):
 		return Color(0, 0, 0, 0)
+
+# Right mouse button popup menu handler
+class MenuActionHandler:
+	# Create the popup menu control for this list view
+	func create_popupmenu():
+		return null
+	# Check the item with id is enabled for selected items
+	func item_enabled(id, selectedItems):
+		return true
+	# This method is call when the menu item is pressed or its shortcut is pressed
+	func id_pressed(id):
+		pass
