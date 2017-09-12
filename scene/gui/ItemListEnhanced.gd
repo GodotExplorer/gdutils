@@ -51,7 +51,7 @@ func _set_menu_handler(h):
 	if typeof(h) == TYPE_OBJECT and h is MenuActionHandler:
 		_popupmenu = h.create_popupmenu()
 		if _popupmenu != null:
-			_popupmenu.connect("id_pressed", menu_handler, "id_pressed")
+			_popupmenu.connect("id_pressed", self, "_on_menu_id_pressed")
 			add_child(_popupmenu)
 
 # Arrary<Variant>  
@@ -138,12 +138,12 @@ func get_selected_item_list():
 	return _items
 
 func _gui_input(event):
-	var selectedItems = get_selected_items()
 	# Mouse button actions
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_RIGHT and not event.pressed:
 			if _popupmenu != null:
 				_popupmenu.set_global_position(get_global_mouse_position())
+				var selectedItems = get_selected_item_list()
 				for i in range(_popupmenu.get_item_count()):
 					var id = _popupmenu.get_item_id(i)
 					_popupmenu.set_item_disabled(i, not menu_handler.item_enabled(id, selectedItems))
@@ -164,13 +164,16 @@ func _gui_input(event):
 					break
 	# Popupmenu shortcuts
 	if event.is_pressed() and _popupmenu != null:
+		var selectedItems = get_selected_item_list()
 		for i in range(_popupmenu.get_item_count()):
 			var id = _popupmenu.get_item_id(i)
 			var shortcut = _popupmenu.get_item_shortcut(i)
 			if shortcut != null and shortcut is ShortCut and event.action_match(shortcut.shortcut):
 				if not _popupmenu.is_item_disabled(i):
-					menu_handler.id_pressed(id)
+					menu_handler.id_pressed(id, selectedItems)
 
+func _on_menu_id_pressed(id):
+	menu_handler.id_pressed(id, get_selected_item_list())
 
 # The provider class for ItemList  
 # The provider decide how the data source is shown in the item list
@@ -223,5 +226,5 @@ class MenuActionHandler:
 	func item_enabled(id, selectedItems):
 		return true
 	# This method is call when the menu item is pressed or its shortcut is pressed
-	func id_pressed(id):
+	func id_pressed(id, selectedItems):
 		pass
