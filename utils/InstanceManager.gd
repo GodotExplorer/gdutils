@@ -75,9 +75,8 @@ func parse_serialized_dict(dict):
 		#   as they are circle referenced
 		var poolDict = dict["Objects"]
 		for id in poolDict:
-			if not int(id) in self.pool:
-				self.pool[int(id)] = _unserialize(poolDict[id], poolDict)
-				self.pool[int(id)].set_meta("ObjectID", int(id))
+			id = int(id)
+			self.pool[id] = _unserialize(poolDict[str(id)], poolDict)
 		# Step2: To resovle all objects that is not comletely unserialized in the poll
 		#	After step1 all object should be able to referenced to now
 		for id in self.pool:
@@ -98,6 +97,13 @@ func parse_serialized_dict(dict):
 # **Returns** 
 # The same structured data cloned from inst
 func deep_clone_instance(inst):
+	if false:# For debug usage
+		var im = get_script().new()
+		im.put("o", inst)
+		im.save("res://o.json")
+		im = get_script().new()
+		im.load("res://o.json")
+		return im.get("o")
 	var im = get_script().new()
 	im.put("o", inst)
 	var im2 = get_script().new()
@@ -139,9 +145,6 @@ func _unserialize(any, rawPool):
 			ret = self.pool[id]
 		else:
 			self.pool[id] = any
-			var instDict = rawPool[str(id)]
-			ret = _unserialize(instDict, rawPool)
-			self.pool[id] = ret
 	elif typeof(any) == TYPE_DICTIONARY:
 		for key in any:
 			var prop = any[key]
