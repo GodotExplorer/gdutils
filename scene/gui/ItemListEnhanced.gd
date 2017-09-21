@@ -36,7 +36,7 @@ signal mouse_right_clicked()
 # The provider of the item list it decides how the data is shown in the list
 var provider = ListItemProvider.new() setget _set_provider
 func _set_provider(p):
-	if typeof(p) == TYPE_OBJECT and p is ListItemProvider:
+	if typeof(p) == TYPE_OBJECT:# and p is ListItemProvider:# FIXME: BUG of GDScript?
 		provider = p
 		update_list()
 
