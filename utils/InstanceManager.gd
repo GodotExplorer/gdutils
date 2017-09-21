@@ -28,6 +28,26 @@
 
 tool
 const json = preload('json.gd')
+
+const TYPE_OBJECT_PREFIX     = "Object:"
+const LEN_TYPE_OBJECT_PREFIX = 7
+const TYPE_ATOMIC_PREFIX     = "Atomic:"
+const LEN_TYPE_ATOMIC_PREFIX = 7
+
+# Atomic types that json doesn't support
+const SERIALIZED_ATOMIC_TYPES = [
+    TYPE_VECTOR2,
+    TYPE_RECT2,
+    TYPE_VECTOR3,
+    TYPE_TRANSFORM2D,
+    TYPE_PLANE,
+    TYPE_QUAT,
+    TYPE_RECT3,
+    TYPE_BASIS,
+    TYPE_TRANSFORM,
+	TYPE_COLOR,
+]
+
 var pool   = {}
 var data   = {}
 
@@ -117,13 +137,15 @@ func deep_clone_instance(inst):
 
 func _serialize(inst):
 	var ret = inst
-	if typeof(inst) == TYPE_OBJECT and inst.get_script() != null:
+	if typeof(inst) in SERIALIZED_ATOMIC_TYPES:
+		ret = str(TYPE_ATOMIC_PREFIX, var2str(inst))
+	elif typeof(inst) == TYPE_OBJECT and inst.get_script() != null:
 		if not self.pool.has(inst.get_instance_id()):
 			var dict = inst2dict(inst)
 			self.pool[inst.get_instance_id()] = dict
 			for key in dict:
 				dict[key] = _serialize(dict[key])
-		ret = str("Object:", inst.get_instance_id())
+		ret = str(TYPE_OBJECT_PREFIX, inst.get_instance_id())
 	elif typeof(inst) == TYPE_ARRAY:
 		ret = []
 		for ele in inst:
@@ -131,7 +153,7 @@ func _serialize(inst):
 	elif typeof(inst) == TYPE_DICTIONARY:
 		ret = {}
 		for key in inst:
-			ret[key] = _serialize(inst[key])
+			ret[_serialize(key)] = _serialize(inst[key])
 	return ret
 
 func _unserialize(any, rawPool):
@@ -139,16 +161,20 @@ func _unserialize(any, rawPool):
 	if typeof(any) == TYPE_REAL:
 		if int(any) == any:
 			ret = int(any)
-	elif typeof(any) == TYPE_STRING and any.begins_with("Object:"):
-		var id  = int(any.substr("Object:".length(), any.length()))
-		if self.pool.has(id):
-			ret = self.pool[id]
-		else:
-			self.pool[id] = any
+	elif typeof(any) == TYPE_STRING:
+		if any.begins_with(TYPE_OBJECT_PREFIX):
+			var id  = int(any.substr(LEN_TYPE_OBJECT_PREFIX, any.length()))
+			if self.pool.has(id):
+				ret = self.pool[id]
+			else:
+				self.pool[id] = any
+		elif any.begins_with(TYPE_ATOMIC_PREFIX):
+			var text  = any.substr(LEN_TYPE_ATOMIC_PREFIX, any.length())
+			ret = str2var(text)
 	elif typeof(any) == TYPE_DICTIONARY:
 		for key in any:
 			var prop = any[key]
-			any[key] = _unserialize(prop, rawPool)
+			any[_unserialize(key, rawPool)] = _unserialize(prop, rawPool)
 		if any.has("@path") and any.has("@subpath"):
 			ret = dict2inst(any)
 	elif typeof(any) == TYPE_ARRAY:
@@ -164,8 +190,8 @@ func _setup_references(inst):
 			var prop = inst.get(propDesc.name)
 			if typeof(prop) in [TYPE_STRING, TYPE_ARRAY, TYPE_DICTIONARY]:
 				inst.set(propDesc.name, _setup_references(prop))
-	elif typeof(inst) == TYPE_STRING and inst.begins_with("Object:"):
-		var id = int(inst.substr("Object:".length(), inst.length()))
+	elif typeof(inst) == TYPE_STRING and inst.begins_with(TYPE_OBJECT_PREFIX):
+		var id = int(inst.substr(LEN_TYPE_OBJECT_PREFIX, inst.length()))
 		if self.pool.has(id):
 			ret = self.pool[id]
 	elif typeof(inst) == TYPE_ARRAY:
@@ -175,5 +201,5 @@ func _setup_references(inst):
 	elif typeof(inst) == TYPE_DICTIONARY:
 		ret = {}
 		for key in inst:
-			ret[key] = _setup_references(inst[key])
+			ret[_setup_references(key)] = _setup_references(inst[key])
 	return ret
