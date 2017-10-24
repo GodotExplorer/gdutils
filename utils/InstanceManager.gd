@@ -45,7 +45,7 @@ const SERIALIZED_ATOMIC_TYPES = [
     TYPE_RECT3,
     TYPE_BASIS,
     TYPE_TRANSFORM,
-	TYPE_COLOR,
+    TYPE_COLOR,
 ]
 
 var pool   = {}
@@ -87,8 +87,7 @@ func serialize_to_dict():
 
 # parse intances from serialized dictionary
 func parse_serialized_dict(dict):
-	self.pool.clear()
-	self.data.clear()
+	_reset()
 	if dict.has("Objects"):
 		# Step1: unserialize all the objects into the poll
 		# 	Some of the objects after this step may not be completely unserialized
@@ -96,6 +95,7 @@ func parse_serialized_dict(dict):
 		var poolDict = dict["Objects"]
 		for id in poolDict:
 			id = int(id)
+			_parsing_instance_uid = id
 			self.pool[id] = _unserialize(poolDict[str(id)], poolDict)
 		# Step2: To resovle all objects that is not comletely unserialized in the poll
 		#	After step1 all object should be able to referenced to now
@@ -134,18 +134,48 @@ func deep_clone_instance(inst):
 ##################################################
 # private methods
 #################################################
+var _parsing_instance_uid   = 0
+var _max_instance_uid       = 0
+var _instance_uid_map       = {}
+var _uid_instance_map       = {}
+
+func _reset():
+	pool.clear()
+	data.clear()
+	_instance_uid_map.clear()
+	_uid_instance_map.clear()
+	_parsing_instance_uid = 0
+	_max_instance_uid = 0
 
 func _serialize(inst):
 	var ret = inst
 	if typeof(inst) in SERIALIZED_ATOMIC_TYPES:
 		ret = str(TYPE_ATOMIC_PREFIX, var2str(inst))
 	elif typeof(inst) == TYPE_OBJECT and inst.get_script() != null:
-		if not self.pool.has(inst.get_instance_id()):
+		var uid = 0
+		var is_replace = false
+		var InstID = inst.get_instance_id()
+		if not _instance_uid_map.has(InstID):
+			uid = _max_instance_uid
+			if inst.has_meta("@InstanceID"):
+				uid = inst.get_meta("@InstanceID")
+				if self.pool.has(uid):
+					is_replace = true
+					var old_inst_id = _uid_instance_map[uid]
+					_instance_uid_map[old_inst_id] = _max_instance_uid
+					_uid_instance_map[_max_instance_uid] = old_inst_id
+					self.pool[_max_instance_uid] = self.pool[uid]
+			_instance_uid_map[InstID] = uid
+			_uid_instance_map[uid]    = InstID
+			_max_instance_uid += 1
+		else:
+			uid = _instance_uid_map[InstID]
+		if is_replace or (not self.pool.has(uid)):
 			var dict = inst2dict(inst)
-			self.pool[inst.get_instance_id()] = dict
+			self.pool[uid] = dict
 			for key in dict:
 				dict[key] = _serialize(dict[key])
-		ret = str(TYPE_OBJECT_PREFIX, inst.get_instance_id())
+		ret = str(TYPE_OBJECT_PREFIX, uid)
 	elif typeof(inst) == TYPE_ARRAY:
 		ret = []
 		for ele in inst:
@@ -177,6 +207,8 @@ func _unserialize(any, rawPool):
 			any[_unserialize(key, rawPool)] = _unserialize(prop, rawPool)
 		if any.has("@path") and any.has("@subpath"):
 			ret = dict2inst(any)
+			if typeof(ret) == TYPE_OBJECT:
+				ret.set_meta("@InstanceID", _parsing_instance_uid)
 	elif typeof(any) == TYPE_ARRAY:
 		ret = []
 		for ele in any:
