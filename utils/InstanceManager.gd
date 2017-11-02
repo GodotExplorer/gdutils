@@ -1,5 +1,5 @@
 ##################################################################################
-#  InstanceManager.gd                            								 #
+#  InstanceManager.gd                                                            #
 ##################################################################################
 #                            This file is part of                                #
 #                                GodotExplorer                                   #
@@ -229,6 +229,7 @@ func _setup_references(inst):
 	var ret = inst
 	if typeof(inst) == TYPE_OBJECT:
 		for propDesc in inst.get_property_list():
+			if propDesc.usage & PROPERTY_USAGE_CATEGORY: continue
 			var prop = inst.get(propDesc.name)
 			if typeof(prop) in [TYPE_STRING, TYPE_ARRAY, TYPE_DICTIONARY]:
 				inst.set(propDesc.name, _setup_references(prop))
