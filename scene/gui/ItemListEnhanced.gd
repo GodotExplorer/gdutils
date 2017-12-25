@@ -48,7 +48,7 @@ func _set_menu_handler(h):
 		_popupmenu.queue_free()
 		remove_child(_popupmenu)
 		_popupmenu = null
-	if typeof(h) == TYPE_OBJECT and h is MenuActionHandler:
+	if typeof(h) == TYPE_OBJECT:# and h is MenuActionHandler:# FIXME: BUG of GDScript?
 		_popupmenu = h.create_popupmenu()
 		if _popupmenu != null:
 			_popupmenu.connect("id_pressed", self, "_on_menu_id_pressed")
