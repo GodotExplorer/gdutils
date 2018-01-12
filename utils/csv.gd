@@ -58,20 +58,17 @@ static func load_csv(path, delim=','):
 # *Returns* `Array<Dictionary>`  
 # * Formated rows with key as first row
 static func csv2dict(array):
-    var ret = []
-    if typeof(array) == TYPE_ARRAY:
-        var keys = []
-        if array.size() > 0:
-            keys = array[0]
-        for i in range(1, array.size()):
-            var line = array[i]
-            if typeof(line) == TYPE_STRING_ARRAY and line.size() == keys.size():
-                var dictLine = {}
-                for j in range(keys.size()):
-                    var key = keys[j]
-                    dictLine[key] = line[j]
-                ret.append(dictLine)
-    return ret
-
-
-
+	var ret = []
+	if typeof(array) == TYPE_ARRAY:
+		var keys = []
+		if array.size() > 0:
+			keys = array[0]
+		for i in range(1, array.size()):
+			var line = array[i]
+			if typeof(line) == TYPE_STRING_ARRAY and line.size() == keys.size():
+				var dictLine = {}
+				for j in range(keys.size()):
+					var key = keys[j]
+					dictLine[key] = line[j]
+				ret.append(dictLine)
+	return ret

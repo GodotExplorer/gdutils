@@ -37,10 +37,10 @@ const image = preload("image.gd")
 # **Return**  
 # * String file content
 static func load_text_content(path):
-    var file = File.new()
-    if OK == file.open(path, File.READ):
-        return file.get_as_text()
-    return ""
+	var file = File.new()
+	if OK == file.open(path, File.READ):
+		return file.get_as_text()
+	return ""
 
 # Save text into file  
 # - - -  
@@ -51,9 +51,9 @@ static func load_text_content(path):
 # **Return**  
 # * in : OK | error code  
 static func save_text_content(text, path):
-    var file = File.new()
-    var err = file.open(path, File.WRITE)
-    if OK == err:
-        file.store_string(text)
-    return err
+	var file = File.new()
+	var err = file.open(path, File.WRITE)
+	if OK == err:
+		file.store_string(text)
+	return err
 

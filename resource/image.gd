@@ -36,15 +36,15 @@ tool
 # **Returns**  
 # * ImageTexture | null
 static func load_external_image_texture(path):
-    var tryTex = load(path)
-    if typeof(tryTex) == TYPE_OBJECT and tryTex != null and tryTex is Texture:
-        return tryTex
-    var img = Image.new()
-    if OK == img.load(path):
-        var tex = ImageTexture.new()
-        tex.create_from_image(img)
-        return tex
-    return null
+	var tryTex = load(path)
+	if typeof(tryTex) == TYPE_OBJECT and tryTex != null and tryTex is Texture:
+		return tryTex
+	var img = Image.new()
+	if OK == img.load(path):
+		var tex = ImageTexture.new()
+		tex.create_from_image(img)
+		return tex
+	return null
 
 # Save image into png file  
 # - - -  
@@ -55,13 +55,13 @@ static func load_external_image_texture(path):
 # **Returns**  
 # *  [int] OK | error code
 static func save_image_texture(texture, path):
-    if texture == null or typeof(texture) != TYPE_OBJECT or typeof(path) != TYPE_STRING:
-        return ERR_INVALID_PARAMETER
-    var img = null
-    if texture is Image:
-        img = texture
-    elif texture is ImageTexture:
-        img = texture.get_data()
-    if img != null:
-        return img.save_png(path)
-    return ERR_INVALID_DATA
+	if texture == null or typeof(texture) != TYPE_OBJECT or typeof(path) != TYPE_STRING:
+		return ERR_INVALID_PARAMETER
+	var img = null
+	if texture is Image:
+		img = texture
+	elif texture is ImageTexture:
+		img = texture.get_data()
+	if img != null:
+		return img.save_png(path)
+	return ERR_INVALID_DATA
