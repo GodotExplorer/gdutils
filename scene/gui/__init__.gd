@@ -29,6 +29,7 @@
 tool
 const Layout = preload("Layout.gd")
 const Window = preload("Window.gd")
+const GridBackground = preload("GridBackground.gd")
 const AutoLayoutControl = preload("AutoLayoutControl.gd")
 const Menu = preload("Menu.gd")
 const ItemListEnhanced = preload("ItemListEnhanced.gd")
