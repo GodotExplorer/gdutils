@@ -29,6 +29,7 @@ extends ItemList
 
 signal double_clicked()
 signal mouse_right_clicked()
+signal selection_changed(selected_items)
 
 const ACCEPT_DS_TYPES = [
 	TYPE_ARRAY,
@@ -39,6 +40,11 @@ const ACCEPT_DS_TYPES = [
 	TYPE_VECTOR2_ARRAY,
 	TYPE_VECTOR3_ARRAY
 ]
+
+func _init():
+	connect("item_selected", self, "__on_select_changed")
+	connect("multi_selected", self, "__on_select_changed")
+	connect("nothing_selected", self, "__on_select_changed")
 
 # ListItemProvider  
 # The provider of the item list it decides how the data is shown in the list
@@ -126,7 +132,7 @@ func selecte_items(p_items):
 		p_items = [p_items]
 	for id in get_selected_items():
 		unselect(id)
-	var single = p_items.size() > 1
+	var single = p_items.size() == 1
 	var selected = false
 	for item in p_items:
 		for i in range(get_item_count()):
@@ -182,6 +188,9 @@ func _gui_input(event):
 
 func _on_menu_id_pressed(id):
 	menu_handler.id_pressed(id, get_selected_item_list())
+
+func __on_select_changed(useless=null, useless2=null):
+	emit_signal("selection_changed", get_selected_item_list())
 
 # The provider class for ItemList  
 # The provider decide how the data source is shown in the item list
