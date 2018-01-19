@@ -30,6 +30,16 @@ extends ItemList
 signal double_clicked()
 signal mouse_right_clicked()
 
+const ACCEPT_DS_TYPES = [
+	TYPE_ARRAY,
+	TYPE_INT_ARRAY,
+	TYPE_REAL_ARRAY,
+	TYPE_COLOR_ARRAY,
+	TYPE_STRING_ARRAY,
+	TYPE_VECTOR2_ARRAY,
+	TYPE_VECTOR3_ARRAY
+]
+
 # ListItemProvider  
 # The provider of the item list it decides how the data is shown in the list
 var provider = ListItemProvider.new() setget _set_provider
@@ -78,7 +88,7 @@ var watching_actions = []
 # This action will clear and re-order the items
 func update_list():
 	clear()
-	if typeof(data_source) == TYPE_ARRAY:
+	if typeof(data_source) in ACCEPT_DS_TYPES:
 		var data_for_show = data_source
 		if provider.sort_required(data_source):
 			data_for_show = []
@@ -112,7 +122,7 @@ func update_item(p_item):
 # Select items, the items selected before will be unselected  
 # items: Array<Variant> items to select
 func selecte_items(p_items):
-	if typeof(p_items) != TYPE_ARRAY:
+	if not typeof(p_items) in ACCEPT_DS_TYPES:
 		p_items = [p_items]
 	for id in get_selected_items():
 		unselect(id)
