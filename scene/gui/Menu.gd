@@ -27,100 +27,29 @@
 tool
 extends Reference
 
-const __Utils = preload("../../utils/__init__.gd")
+# Menu type
+enum {
+	NORMAL,
+	CHECHABLE,
+	SEPARATOR
+}
 
-var title = ""				# The title of the menu item
-var _parent = null			# The parent menu item
-var _submenus = []			# Submenus
-var is_separator = false	# Is the menu is a separator
-var checkable = false		# Is the menu is checkable
-var icon_res = ""			# The icon resource path
-var weight = 0				# The weight of the menu item
+var type		 = NORMAL	# Type of the menu item
+var icon 		 = null		# The icon texture
+var title 		 = ""		# The title text of the menu item
+var disabled	 = false	# The item is disabled or enabled
+var children	 = []		# Array<Menu> Submenus
+var parent_ref 	 = null		# Weakref<Menu> The parent menu item
+signal item_pressed(item)	# emitted on menu item is pressed
 
-# Menu or submenu pressed event
-# **Emitted when** child item pressed
-# @param [item_path:String] The path of the pressed item
-signal item_pressed(item_path)
-
-func _init(p_tite, checkable = false, separator = false, weight = 0):
-	self.title = p_tite
-	self.checkable = checkable
-	self.is_separator = separator
-	self.weight = weight
-
-# Get the full path of the menu
-# @return [String] The menu path seperated with `/`
-func get_path():
-	var path = title
-	var parent = get_parent()
-	while parent != null:
-		path = str(parent.title, "/", path)
-		parent = parent.get_parent()
-	return path
-
-func get_pathes_contains(root=""):
-	var pathes = []
-	var path = title
-	if not root.empty():
-		path = str(root, "/", path)
-	pathes.append(path)
-	for sm in _submenus:
-		pathes += sm.get_pathes_contains(path)
-	return pathes
-
-func clone():
-	var menu = load("res://basic/menu.gd").new(title, checkable, is_separator, weight)
-	menu.icon_res = icon_res
-	for sm in _submenus:
-		menu.add_submenu(sm.clone())
-	return menu
-
-# Get parent menu  
-# @return [Menu] The parent menu instance
-func get_parent():
-	if _parent != null:
-		return _parent
-	return null
-
-# Add child menu item
-# @param [menu:Menu] The child menu item
-# @return [Menu] return self
-func add_submenu(menu):
-	if __Utils.implements(menu, get_script()):
-		menu._parent = self
-		_submenus.append(menu)
-	elif typeof(menu) == TYPE_STRING:
-		_submenus.append(get_script().new(menu))
-	sort_children()
-	return self
-
-# Remove child menu item
-# @param [menu:Menu] The child menu item to remove
-# @return [Menu] return self
-func remove_submenu(menu):
-	if menu in _submenus:
-		menu._parent = null
-		_submenus.erase(menu)
-	return self
-
-# Merge all of the children with another menu
-# @param [menu:Menu] The menu to merge with
-# @return [Menu] Return self after merged
-func merge(menu):
-	for m in menu._submenus:
-		var cm = get_child(m.title)
-		if cm != null:
-			cm.merge(m)
-		else:
-			add_submenu(m)
-	sort_children()
-	return self
+func _init(p_title = ""):
+	title = p_title
 
 # Get child menu item by title
 # @param [p_title:String] The title of the child menu
 # @return [Menu|Nil] Return the child menu item or null if not found
 func get_child(p_title):
-	for m in _submenus:
+	for m in children:
 		if m.title == p_title:
 			return m
 	return null
@@ -129,12 +58,110 @@ func get_child(p_title):
 # - - - - - - - - - -  
 # *Returns* Array<Menu>  
 func get_children():
-	return self._submenus
+	return self.children
 
-# Get child menu item by path
-# @param [path:String] The path of the child item emnu like `Open/Text File`
-# @return [Menu|Nil] Return the found menu item or null if not found
-func get_item(path):
+# Get parent menu
+# - - - - - - - - - -  
+# *Returns* Menu  
+# The parent menu instance
+func get_parent():
+	if parent_ref != null:
+		return parent_ref.get_ref()
+	return null
+
+# Reset the parent menu item  
+# - - - - - - - - - -  
+# *Parameters*  
+# * [new_parent: Menu] The new parent menu item  
+# - - - - - - - - - -  
+# *Returns* Menu  
+# * Return self menu after reparent
+func reparent(new_parent):
+	var parent = get_parent()
+	if parent == new_parent:
+		return
+	if parent != null:
+		if self in parent.children:
+			parent.children.erase(self)
+	if new_parent != null:
+		new_parent.children.append(self)
+		parent_ref = weakref(new_parent)
+	else:
+		parent_ref = null
+	return self
+
+# Remove child menu item
+# @param [menu:Menu] The child menu item to remove
+# - - - - - - - - - -  
+# *Returns* Menu  
+# * Return self menu item
+func remove_child(p_menu):
+	p_menu.reparent(null)
+	return self
+
+# Add child menu item
+# @param [menu:Menu] The child menu item  
+# - - - - - - - - - -  
+# *Returns* Menu  
+# * Return self menu item
+func add_child(p_menu):
+	p_menu.reparent(self)
+	return self
+
+# Add a seperator menu item
+# - - - - - - - - - -  
+# *Returns* Menu  
+# * Return self menu item
+func add_separator():
+	var item = get_script().new()
+	item.type = SEPARATOR
+	add_child(item)
+	return self
+
+# Create a sub-menu item  
+# - - - - - - - - - -  
+# *Parameters*  
+# * [p_type: MenuType] The type of the menu item  
+# * [p_title: String] The menu item title  
+# - - - - - - - - - -  
+# *Returns* Menu  
+# * Return the created menu item
+func create_item(p_title=""):
+	var item  = get_script().new(p_title)
+	add_child(item)
+	return item
+
+# Get the full path of the menu item
+# @return [String] The menu path is seperated with `/`
+func get_path():
+	var path = title
+	var parent = get_parent()
+	while parent != null:
+		path = str(parent.title, "/", path)
+		parent = parent.get_parent()
+	return path
+
+# Clone the menu item include its submenu items  
+# - - - - - - - - - -  
+# *Returns* Variant  
+# * Return document
+func clone():
+	var menu        = get_script().new()
+	menu.type       = type
+	menu.icon       = icon
+	menu.title      = title
+	menu.disabled   = disabled
+	menu.parent_ref = parent_ref
+	for item in children:
+		menu.add_submenu(item.clone())
+	return menu
+
+# Find child menu item by path  
+# - - - - - - - - - -  
+# @param [path:String] The path of the child item emnu like `Open/Text File`  
+# - - - - - - - - - -  
+# @return [Menu|Nil] Return the found menu item or null if not found  
+func find_item(path):
 	if typeof(path) == TYPE_STRING and not path.empty():
 		var titles = path.split("/")
 		var menu = self
@@ -146,64 +173,77 @@ func get_item(path):
 			return menu
 	return null
 
-# Create a MenuButton with children
-# @return [MenuButton] The created MenuButton instance
-func make_menu_button():
-	var button = MenuButton.new()
-	button.set_text(title)
-	render_to_popup(button.get_popup())
-	return button
-
-# Create a PopupMenu with children
-# @return [PopupMenu] The created PopupMenu instance
-func make_popup_menu():
-	var popup = PopupMenu.new()
-	render_to_popup(popup)
-	return popup
+# Render the menu(include all of the submenu) into a MenuButton control  
+func render_to_menu_button(p_button):
+	if typeof(p_button) == TYPE_OBJECT and p_button is MenuButton:
+		p_button.set_text(title)
+		render_to_popup(p_button.get_popup())
 
 # Render the menu(include all of the submenu) into a PopupMenu node
 # @param [popup:PopupMenu] The PopupMenu node instance
-# @param [?base_path:String] The root name of the menu
-func render_to_popup(popup, base_path = "$_root_$"):
-	if base_path == "$_root_$":
-		base_path = get_path()
-	if not _submenus.empty() and popup is PopupMenu:
-		popup.connect("item_pressed", self, "_on_item_pressed", [popup])
-		var __menu_id = 0
-		for submenu in _submenus:
-			if submenu.is_separator:
+var popups = []
+func render_to_popup(popup):
+	if not children.empty() and typeof(popup) == TYPE_OBJECT and popup is PopupMenu:
+		if not popup.is_connected("id_pressed", self, "_on_item_pressed"):
+			popup.connect("id_pressed", self, "_on_item_pressed", [popup])
+			popups.append(popup)
+		var idx = 0
+		for item in children:
+			if item.type == SEPARATOR:
 				popup.add_separator()
-			elif submenu._submenus.empty():
-				if submenu.checkable and not submenu.icon_res.empty():
-					popup.add_icon_check_item(load(submenu.icon_res), submenu.title, __menu_id)
-				elif submenu.checkable:
-					popup.add_check_item(submenu.title, __menu_id)
-				elif not submenu.icon_res.empty():
-					popup.add_icon_item(load(submenu.icon_res), submenu.title, __menu_id)
+			elif item.children.empty():
+				if item.type == CHECHABLE:
+					if item.icon != null:
+						popup.add_icon_check_item(item.icon, item.title, idx)
+					else:
+						popup.add_check_item(item.title, idx)
+				elif item.icon != null:
+					popup.add_icon_item(item.icon, item.title, idx)
 				else:
-					popup.add_item(submenu.title, __menu_id)
-				popup.set_item_metadata(__menu_id, str(base_path, "/", submenu.title))
+					popup.add_item(item.title, idx)
 			else:
 				var subpop = PopupMenu.new()
-				subpop.set_name(submenu.title)
+				subpop.set_name(item.title)
 				popup.add_child(subpop)
-				popup.add_submenu_item(submenu.title, submenu.title)
-				submenu.render_to_popup(subpop, str(base_path, "/", submenu.title))
-			__menu_id += 1
+				popup.add_submenu_item(item.title, item.title, idx)
+				item.render_to_popup(subpop)
+			popup.set_item_metadata(idx, item)
+			idx += 1
 
-func _on_item_pressed(id, popup):
-	var abspath = popup.get_item_metadata(id)
+# Load items form dictionary  
+# - - - - - - - - - -  
+# *Parameters*  
+# * [dict: Dictionary] Menu configuration data
+# ```gdscript
+# menu.parse_dictionary({
+# 	"title": "Export",
+# 	"icon": "res://icon.png"
+# 	"items": [
+# 	  { "title": "PNG File", "disabled": true},
+# 	  { "type": "separator"}
+# 	  { "title": "JPG File", "type": "checkable"}
+# 	]
+# })
+# ```
+func parse_dictionary(dict):
+	self.title = str(dict.title) if dict.has('title') else self.title
+	self.disabled = bool(dict.disabled) if dict.has('disabled') else false
+	self.icon = load(str(dict.icon)) if dict.has('icon') else null
+	if dict.has('type') and typeof(dict.type) == TYPE_STRING:
+		if dict.type.to_lower() == 'separator':
+			self.type = SEPARATOR
+		elif dict.type.to_lower() in ['checkable', 'check', 'checkbox']:
+			self.type = CHECHABLE
+	if dict.has('items') and typeof(dict.items) == TYPE_ARRAY:
+		for item in dict.items:
+			if typeof(item) == TYPE_DICTIONARY:
+				var m = get_script().new()
+				m.parse_dictionary(item)
+				add_child(m)
+
+func _on_item_pressed(idx, popup):
+	var menu   = popup.get_item_metadata(idx)
 	var parent = self
 	while parent != null:
-		var path = abspath.substr(parent.get_path().length()+1, abspath.length())
-		parent.emit_signal("item_pressed", path)
+		parent.emit_signal("item_pressed", menu)
 		parent = parent.get_parent()
-
-func sort_children():
-	_submenus.sort_custom(self, "__sort")
-	for sm in _submenus:
-		sm.sort_children()
-	pass
-
-func __sort(m1, m2):
-	return m1.weight < m2.weight
