@@ -38,6 +38,7 @@ var type		 = NORMAL	# Type of the menu item
 var icon 		 = null		# The icon texture
 var title 		 = ""		# The title text of the menu item
 var disabled	 = false	# The item is disabled or enabled
+var checked		 = false	# This item is checked if the type is CHECKABLE
 var children	 = []		# Array<Menu> Submenus
 var parent_ref 	 = null		# Weakref<Menu> The parent menu item
 signal item_pressed(item)	# emitted on menu item is pressed
@@ -151,6 +152,7 @@ func clone():
 	menu.icon       = icon
 	menu.title      = title
 	menu.disabled   = disabled
+	menu.checked	= checked
 	menu.parent_ref = parent_ref
 	for item in children:
 		menu.add_submenu(item.clone())
@@ -184,6 +186,10 @@ func render_to_menu_button(p_button):
 var popups = []
 func render_to_popup(popup):
 	if not children.empty() and typeof(popup) == TYPE_OBJECT and popup is PopupMenu:
+		popup.clear()
+		for subpop in popup.get_children():
+			if subpop is PopupMenu:
+				subpop.queue_free()
 		if not popup.is_connected("id_pressed", self, "_on_item_pressed"):
 			popup.connect("id_pressed", self, "_on_item_pressed", [popup])
 			popups.append(popup)
@@ -197,17 +203,19 @@ func render_to_popup(popup):
 						popup.add_icon_check_item(item.icon, item.title, idx)
 					else:
 						popup.add_check_item(item.title, idx)
+					popup.set_item_checked(idx, item.checked)
 				elif item.icon != null:
 					popup.add_icon_item(item.icon, item.title, idx)
 				else:
 					popup.add_item(item.title, idx)
 			else:
 				var subpop = PopupMenu.new()
-				subpop.set_name(item.title)
+				subpop.name = str(idx, '#',item.title)
 				popup.add_child(subpop)
-				popup.add_submenu_item(item.title, item.title, idx)
+				popup.add_submenu_item(item.title, subpop.name, idx)
 				item.render_to_popup(subpop)
 			popup.set_item_metadata(idx, item)
+			popup.set_item_disabled(idx, item.disabled)
 			idx += 1
 
 # Load items form dictionary  
@@ -221,7 +229,7 @@ func render_to_popup(popup):
 # 	"items": [
 # 	  { "title": "PNG File", "disabled": true},
 # 	  { "type": "separator"}
-# 	  { "title": "JPG File", "type": "checkable"}
+# 	  { "title": "JPG File", "type": "checkable", "checked": false}
 # 	]
 # })
 # ```
@@ -229,6 +237,7 @@ func parse_dictionary(dict):
 	self.title = str(dict.title) if dict.has('title') else self.title
 	self.disabled = bool(dict.disabled) if dict.has('disabled') else false
 	self.icon = load(str(dict.icon)) if dict.has('icon') else null
+	self.checked = bool(dict.checked) if dict.has('checked') else false
 	if dict.has('type') and typeof(dict.type) == TYPE_STRING:
 		if dict.type.to_lower() == 'separator':
 			self.type = SEPARATOR
