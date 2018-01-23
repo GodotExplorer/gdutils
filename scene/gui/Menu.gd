@@ -30,7 +30,7 @@ extends Reference
 # Menu type
 enum {
 	NORMAL,
-	CHECHABLE,
+	CHECKABLE,
 	SEPARATOR
 }
 
@@ -192,7 +192,7 @@ func render_to_popup(popup):
 			if item.type == SEPARATOR:
 				popup.add_separator()
 			elif item.children.empty():
-				if item.type == CHECHABLE:
+				if item.type == CHECKABLE:
 					if item.icon != null:
 						popup.add_icon_check_item(item.icon, item.title, idx)
 					else:
@@ -233,7 +233,7 @@ func parse_dictionary(dict):
 		if dict.type.to_lower() == 'separator':
 			self.type = SEPARATOR
 		elif dict.type.to_lower() in ['checkable', 'check', 'checkbox']:
-			self.type = CHECHABLE
+			self.type = CHECKABLE
 	if dict.has('items') and typeof(dict.items) == TYPE_ARRAY:
 		for item in dict.items:
 			if typeof(item) == TYPE_DICTIONARY:
