@@ -27,6 +27,8 @@
 tool
 extends ItemList
 
+export (NodePath) var context_menu = "list_menu"
+
 signal double_clicked()
 signal mouse_right_clicked()
 signal selection_changed(selected_items)
@@ -45,7 +47,7 @@ func _init():
 	connect("item_selected", self, "__on_select_changed")
 	connect("multi_selected", self, "__on_select_changed")
 	connect("nothing_selected", self, "__on_select_changed")
-
+	connect("item_rmb_selected", self, "__on_item_rmb_select")
 # ListItemProvider  
 # The provider of the item list it decides how the data is shown in the list
 var provider = ListItemProvider.new() setget _set_provider
@@ -150,7 +152,13 @@ func get_selected_item_list():
 	for idx in get_selected_items():
 		_items.append(get_item_metadata(idx))
 	return _items
-
+	
+#响应右键菜单
+func __on_item_rmb_select(index,at_position):
+	if index > -1:
+		get_node(context_menu).image_metadata = get_item_metadata(index)
+		get_node(context_menu).popup(Rect2(get_global_mouse_position(),Vector2(150,50)))
+	
 func _gui_input(event):
 	# Mouse button actions
 	if event is InputEventMouseButton:
@@ -162,6 +170,7 @@ func _gui_input(event):
 					var id = _popupmenu.get_item_id(i)
 					_popupmenu.set_item_disabled(i, not menu_handler.item_enabled(id, selectedItems))
 				_popupmenu.popup()
+			
 			emit_signal("mouse_right_clicked")
 		elif event.doubleclick:
 			emit_signal("double_clicked")
