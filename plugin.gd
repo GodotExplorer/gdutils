@@ -30,6 +30,7 @@ tool
 extends EditorPlugin
 
 func _enter_tree():
+	add_custom_type("AsyncTextureRect", "TextureRect", preload("scene/gui/AsyncTextureRect.gd"), null)
 	add_custom_type("AutoLayoutControl", "Control", preload("scene/gui/AutoLayoutControl.gd"), null)
 	add_custom_type("ItemListEnhanced", "ItemList", preload("scene/gui/ItemListEnhanced.gd"), null)
 	add_custom_type("GridBackground", "TextureRect", preload("scene/gui/GridBackground.gd"), null)

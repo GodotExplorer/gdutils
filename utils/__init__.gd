@@ -31,6 +31,7 @@ const uuid = preload("uuid.gd")
 const json = preload("json.gd")
 const InstanceManager = preload("InstanceManager.gd")
 const csv = preload("csv.gd")
+const http = preload("http.gd")
 
 static func implements(obj, interface= {}):
 	if obj == null or interface == null:
