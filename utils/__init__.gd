@@ -29,6 +29,7 @@
 tool
 const uuid = preload("uuid.gd")
 const json = preload("json.gd")
+const AsyncTaskQueue = preload("AsyncTaskQueue.gd")
 const InstanceManager = preload("InstanceManager.gd")
 const csv = preload("csv.gd")
 const http = preload("http.gd")

@@ -69,6 +69,14 @@ func move_to_item(data):
 	if pos.y > 0:
 		self.scroll_vertical = pos.y
 
+# Get footer node instance
+func get_footer():
+	return _footer
+
+# Get header node instance
+func get_header():
+	return _header
+
 func _init():
 #	connect("resized", self, "queue_update_layout")
 	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -121,10 +129,12 @@ func _process(delta):
 	var scroll = self.scroll_horizontal if direction == HORIZONTAL else self.scroll_vertical
 	if not _queue_updating:
 		_queue_updating = scroll != _last_frame_scroll
+		_last_frame_scroll = scroll
 	if _queue_updating:
 		_update_items(scroll - _last_frame_scroll)
-		_last_frame_scroll = scroll
 		_queue_updating = false
+	if _footer.rect_size != _footer_size:
+		_footer.rect_size = _footer_size
 
 func _update_items(scroll):
 	var render_count = _item_node_cache.size()
@@ -155,14 +165,19 @@ func _update_items(scroll):
 				node.rect_size = _item_size
 			node.show()
 		else:
-			node.hide()			
+			node.hide()
 	if _footer:
 		if direction == VERTICAL:
 			_footer.rect_position = Vector2(0, _container.rect_min_size.y - _footer_size.y)
 		elif direction == HORIZONTAL:
 			_footer.rect_position = Vector2(_container.rect_min_size.x - _footer_size.x, 0)
-	if scroll >= 0 and top_index + get_page_size() >= data_source.size():
-		emit_signal("end_reached")
+	# emit end/begin reached signal
+	if moved_step != 0:
+		if top_index + get_page_size() + moved_step > data_source.size():
+			emit_signal("end_reached")
+		elif top_index + moved_step < 0:
+			emit_signal("begin_readched")
+			
 
 func _update_layout():
 	_clear()
@@ -196,8 +211,6 @@ func _calculate_item_size():
 			_footer_size.x = max(self.rect_size.x, _footer_size.x)
 		if _footer.size_flags_vertical & Control.SIZE_EXPAND:
 			_footer_size.y = max(self.rect_size.y, _footer_size.y)
-		if _footer.rect_size != _footer_size:
-			_footer.rect_size = _footer_size
 	return size
 
 func _alloc_cache_nodes():
