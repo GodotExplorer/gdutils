@@ -55,18 +55,22 @@ func _init():
 func _set_url(value):
 	if state in [State.LOADING, State.SUCCESS] and url == value:
 		return
-	url = value
+	self.texture = null
+	if !is_inside_tree():
+		self.state = State.IDLE
+		return
 	# Don't load the image in the editor as it will save the data to the scene
 	if Engine.editor_hint: return
-	var path = url
+	var path = value
 	if path.begins_with("file://"):
-		path = path.substr(len("file://"), url)
+		path = path.substr(len("file://"), value)
 	if File.new().file_exists(path):
 		# TODO: implement async load from file in thread
 		self.state = State.FAILED
 	else:
-		if OK == http.request(url):
+		if OK == http.request(value):
 			self.state = State.LOADING
+	url = value
 
 func _set_state(p_state):
 	state = p_state

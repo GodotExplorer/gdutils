@@ -50,6 +50,7 @@ var _footer = null
 var _header = null
 var _header_size = Vector2()
 var _footer_size = Vector2()
+var _last_top_index = -1
 
 # Queue update the visiable items of the list  
 func queue_update():
@@ -69,7 +70,7 @@ func move_to_item(data):
 		self.scroll_vertical = pos.y
 
 func _init():
-	connect("resized", self, "queue_update_layout")
+#	connect("resized", self, "queue_update_layout")
 	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_container)
 	self._queue_updating = true
@@ -128,6 +129,20 @@ func _process(delta):
 func _update_items(scroll):
 	var render_count = _item_node_cache.size()
 	var top_index = _get_top_line_index()
+	# replace front and back elements if top item changed	
+	var moved_step = top_index - _last_top_index
+	_last_top_index = top_index
+	if moved_step > 0:
+		for i in range(moved_step):
+			var front = _item_node_cache[0]
+			_item_node_cache.pop_front()
+			_item_node_cache.push_back(front)
+	elif moved_step < 0:
+		for i in range(abs(moved_step)):
+			var back = _item_node_cache[-1]
+			_item_node_cache.pop_back()
+			_item_node_cache.push_front(back)
+	# update item data if necessury
 	for i in range(render_count):
 		var index = top_index + i
 		var node = _item_node_cache[i]
@@ -140,7 +155,7 @@ func _update_items(scroll):
 				node.rect_size = _item_size
 			node.show()
 		else:
-			node.hide()
+			node.hide()			
 	if _footer:
 		if direction == VERTICAL:
 			_footer.rect_position = Vector2(0, _container.rect_min_size.y - _footer_size.y)
