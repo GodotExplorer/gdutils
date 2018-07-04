@@ -1,5 +1,5 @@
 ##################################################################################
-#    AsyncTextureRect.gd                                                              #
+#    AsyncHttpTextutreRect.gd                                                    #
 ##################################################################################
 #                            This file is part of                                #
 #                                GodotExplorer                                   #
@@ -17,7 +17,7 @@
 # The above copyright notice and this permission notice shall be included in all #
 # copies or substantial portions of the Software.                                #
 #                                                                                #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR   #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     #
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       #
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    #
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         #
@@ -26,80 +26,41 @@
 # SOFTWARE.                                                                      #
 ##################################################################################
 
-tool
-extends TextureRect
+extends "AsyncTextureRect.gd"
+var http = preload("../../utils/http.gd").new()
 
-enum State {
-	IDLE,
-	LOADING,
-	FAILED,
-	SUCCESS
-}
+func _init().():
+	http.name = "http"
+	http.connect("request_completed", self, '_on_http_request_done')
+	http.connect("request_failed", self, '_on_http_request_failed')
+	http.connect("request_progress", self, '_on_http_request_progress')
+	add_child(http)
 
-
-var container = CenterContainer.new()
-var state = IDLE	setget _set_state
-export var url = "" setget _set_url
-export(PackedScene) var progress_template = null
-var progress_node = null
-export(PackedScene) var failed_template = null
-var failed_node = null
-var _pending_load = false
-
-func _init():
-	container.name = "PresetControls"
-	container.set_anchors_and_margins_preset(Control.PRESET_WIDE)
-	add_child(container)
-
-func _set_url(value):
-	if url == value and (state in [State.LOADING, State.SUCCESS]):
-		return
-	url = value
-	if not value.empty():
-		self.texture = null
-		_pending_load = true
-		set_process(true)
-
-# *virtual* Do async load action here don't forget change state
 func _async_load_url():
-	pass
+	if OK == http.request(url):
+		self.state = State.LOADING
+	else:
+		self.state = State.FAILED
 
-func _set_state(p_state):
-	state = p_state
-	if progress_node: progress_node.hide()
-	if failed_node: failed_node.hide()
-	match state:
-		State.LOADING:
-			if progress_node: progress_node.show()
-		State.FAILED:
-			if failed_node: failed_node.show()
+func _on_http_request_done(p_url, headers, body):
+	if p_url == self.url:
+		var img = http.resolve_respose_body(headers, body)
+		if typeof(img) == TYPE_OBJECT and img is Image:
+			var tex = ImageTexture.new()
+			tex.create_from_image(img)
+			self.texture = tex
+			self.state = State.SUCCESS
+		else:
+			self.state = State.FAILED
 
-func _ready():
-	if progress_template != null:
-		var node = progress_template.instance()
-		if node != null:
-			progress_node = node
-			progress_node.name = "progress"
-			container.add_child(progress_node)
-			if progress_node.has_method('set_min'):
-				progress_node.set_min(0)
-	if failed_template != null:
-		var node = failed_template.instance()
-		if node != null:
-			failed_node = node
-			failed_node.name = "failed"
-			container.add_child(failed_node)
-	# initialize properties
-	self.state = State.IDLE
-	self.url = url
+func _on_http_request_failed(p_url, result, response_code):
+	if url == p_url:
+		self.state = State.FAILED
 
-func _process(delta):
-	if _pending_load:
-		_pending_load = false
-		set_process(false)
-		# Don't load the image in the editor as it will save the data to the scene
-		if Engine.editor_hint:
-			printt("AsyncTextureRect: ignored loading url ", url)
-			return
-		# run async load action
-		_async_load_url()
+func _on_http_request_progress(p_url, value, max_size):
+	if p_url == self.url and progress_node != null:
+		if progress_node.has_method('set_max'):
+			progress_node.set_max(max_size)
+		if progress_node.has_method('set_value'):
+			progress_node.set_value(value)
+	

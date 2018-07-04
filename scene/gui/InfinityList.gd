@@ -84,14 +84,16 @@ func _init():
 	self._queue_updating = true
 
 func _enter_tree():
-	if typeof(header_template) == TYPE_OBJECT and header_template is PackedScene:
-		_header = header_template.instance()
-		_container.add_child(_header)
-	if typeof(footer_template) == TYPE_OBJECT and footer_template is PackedScene:
-		_footer = footer_template.instance()
-		_container.add_child(_footer)
-
-func _ready():
+	# header
+	if _header == null:
+		if typeof(header_template) == TYPE_OBJECT and header_template is PackedScene:
+			_header = header_template.instance()
+			_container.add_child(_header)
+	# footer
+	if _footer == null:
+		if typeof(footer_template) == TYPE_OBJECT and footer_template is PackedScene:
+			_footer = footer_template.instance()
+			_container.add_child(_footer)
 	queue_update_layout()
 
 func _exit_tree():
@@ -133,8 +135,11 @@ func _process(delta):
 	if _queue_updating:
 		_update_items(scroll - _last_frame_scroll)
 		_queue_updating = false
-	if _footer.rect_size != _footer_size:
+	# footer & header size
+	if _footer != null and _footer.rect_size != _footer_size:
 		_footer.rect_size = _footer_size
+	if _header != null and _header.rect_size != _header_size:
+		_header.rect_size = _header_size
 
 func _update_items(scroll):
 	var render_count = _item_node_cache.size()
@@ -214,12 +219,12 @@ func _calculate_item_size():
 	return size
 
 func _alloc_cache_nodes():
+	# items
 	var cache_size = 0
 	if direction == VERTICAL:
 		cache_size = ceil(self.rect_size.y / (_item_size.y + space)) + CACHE_SIZE
 	elif direction == HORIZONTAL:
 		cache_size = ceil(self.rect_size.x / (_item_size.x + space)) + CACHE_SIZE
-
 	var cur_cache_size = _item_node_cache.size()
 	if cur_cache_size < cache_size:
 		_item_node_cache.resize(cache_size)
