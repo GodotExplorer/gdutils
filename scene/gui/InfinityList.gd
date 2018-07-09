@@ -94,10 +94,12 @@ func _enter_tree():
 		if typeof(footer_template) == TYPE_OBJECT and footer_template is PackedScene:
 			_footer = footer_template.instance()
 			_container.add_child(_footer)
-	queue_update_layout()
+	# queue_update_layout()
+	queue_update()
 
 func _exit_tree():
-	_clear()
+	# _clear()
+	pass
 
 func _set_data_source(ds):
 	data_source = ds

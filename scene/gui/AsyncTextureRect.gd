@@ -55,8 +55,8 @@ func _set_url(value):
 	if url == value and (state in [State.LOADING, State.SUCCESS]):
 		return
 	url = value
+	self.texture = null
 	if not value.empty():
-		self.texture = null
 		_pending_load = true
 		set_process(true)
 
