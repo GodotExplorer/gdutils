@@ -35,6 +35,7 @@ func _enter_tree():
 	add_custom_type("ItemListEnhanced", "ItemList", preload("scene/gui/ItemListEnhanced.gd"), null)
 	add_custom_type("InfinityList", "ScrollContainer", preload("scene/gui/InfinityList.gd"), null)
 	add_custom_type("GridBackground", "TextureRect", preload("scene/gui/GridBackground.gd"), null)
+	add_custom_type("ScrollableTabContainer", "TextureRect", preload("scene/gui/ScrollableTabContainer.gd"), null)
 
 func _exit_tree():
 	remove_custom_type("AsyncHttpTextureRect")
@@ -42,3 +43,4 @@ func _exit_tree():
 	remove_custom_type("ItemListEnhanced")
 	remove_custom_type("InfinityList")
 	remove_custom_type("GridBackground")
+	remove_custom_type("ScrollableTabContainer")

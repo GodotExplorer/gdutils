@@ -106,6 +106,7 @@ func _process(delta):
             emit_signal('request_progress', url, rq.get_downloaded_bytes(), rq.get_body_size())
 
 func _on_request_completed(result, response_code, headers, body, url):
+    if not url in request_nodes: return
     var rq = request_nodes[url]
     if result == HTTPRequest.RESULT_SUCCESS and response_code == HTTPClient.RESPONSE_OK:
         emit_signal('request_progress', url, rq.get_downloaded_bytes(), rq.get_body_size())

@@ -142,6 +142,10 @@ func _process(delta):
 		_footer.rect_size = _footer_size
 	if _header != null and _header.rect_size != _header_size:
 		_header.rect_size = _header_size
+	# item size
+	for item in _item_node_cache:
+		if item.is_inside_tree() and item.rect_size != _item_size:
+			item.rect_size = _item_size
 
 func _update_items(scroll):
 	var render_count = _item_node_cache.size()
@@ -224,9 +228,9 @@ func _alloc_cache_nodes():
 	# items
 	var cache_size = 0
 	if direction == VERTICAL:
-		cache_size = ceil(self.rect_size.y / (_item_size.y + space)) + CACHE_SIZE
+		cache_size = round(self.rect_size.y / (_item_size.y + space)) + CACHE_SIZE
 	elif direction == HORIZONTAL:
-		cache_size = ceil(self.rect_size.x / (_item_size.x + space)) + CACHE_SIZE
+		cache_size = round(self.rect_size.x / (_item_size.x + space)) + CACHE_SIZE
 	var cur_cache_size = _item_node_cache.size()
 	if cur_cache_size < cache_size:
 		_item_node_cache.resize(cache_size)
