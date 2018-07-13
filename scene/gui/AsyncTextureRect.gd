@@ -49,6 +49,7 @@ var _pending_load = false
 func _init():
 	container.name = "PresetControls"
 	container.set_anchors_and_margins_preset(Control.PRESET_WIDE)
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(container)
 
 func _set_url(value):

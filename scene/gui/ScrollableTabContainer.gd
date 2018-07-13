@@ -29,7 +29,8 @@
 tool
 extends Control
 export var slide_speed = 1000.0
-signal on_side_page_finished()
+export var expand_pages = false
+signal on_side_page_finished(page)
 
 var tween = Tween.new()
 var pages = []
@@ -93,11 +94,12 @@ func on_tween_completed(obj, key):
 	for page in pages:
 		var global_rect = Rect2(page.rect_global_position, page.rect_size)
 		# FIXME: 引擎BUG， 获取到错误的控件位置
-		var self_rect = get_viewport_rect() #Rect2(self.rect_global_position, self.rect_size)
-		if not global_rect.intersects(self_rect):
+		# var self_rect = Rect2(self.rect_global_position, self.rect_size)
+		# if not global_rect.intersects(self_rect):
+		if page.name != current_page:
 			if page.get_parent() == page_container:
 				page_container.remove_child(page)
-	emit_signal("on_side_page_finished")
+	emit_signal("on_side_page_finished", current_page)
 
 
 func _ready():
@@ -110,3 +112,9 @@ func _ready():
 					current_page = n.name
 		if not current_page.empty():
 			self.current_page = current_page
+
+func _process(delta):
+	if expand_pages:
+		for page in pages:
+			if page.rect_size != self.rect_size:
+				page.rect_size = self.rect_size
