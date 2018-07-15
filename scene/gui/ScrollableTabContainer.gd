@@ -28,7 +28,7 @@
 
 tool
 extends Control
-export var slide_speed = 1000.0
+export var slide_duration = 0.5
 export var expand_pages = false
 signal on_side_page_finished(page)
 
@@ -77,8 +77,7 @@ func show_page(name):
 		_sliding = true
 		var init_val = page_container.rect_position
 		if init_val != tar_pos:
-			var duration = (init_val - tar_pos).length() / slide_speed
-			tween.interpolate_property(page_container, 'rect_position', init_val, tar_pos, duration, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+			tween.interpolate_property(page_container, 'rect_position', init_val, tar_pos, slide_duration, Tween.TRANS_EXPO, Tween.EASE_IN_OUT)
 			tween.start()
 		else:
 			on_tween_completed(self, 'rect_position')
