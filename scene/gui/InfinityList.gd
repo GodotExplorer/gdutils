@@ -53,8 +53,11 @@ var _footer_size = Vector2()
 var _last_top_index = -1
 
 # Queue update the visiable items of the list  
-func queue_update():
+# If `item_count_changed` is `true` the content size will be updated
+func queue_update(item_count_changed = false):
 	_queue_updating = true
+	if item_count_changed:
+		self.data_source = data_source
 
 # Force update the list
 func queue_update_layout():
@@ -68,6 +71,11 @@ func move_to_item(data):
 		self.scroll_horizontal = pos.x
 	if pos.y > 0:
 		self.scroll_vertical = pos.y
+
+# Move to begin position of the list
+func move_to_begin():
+	self.scroll_vertical = 0
+	self.scroll_horizontal = 0
 
 # Get footer node instance
 func get_footer():
