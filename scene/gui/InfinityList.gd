@@ -36,6 +36,7 @@ export(PackedScene) var header_template
 export(PackedScene) var footer_template
 export(int, 0, 1000) var space = 0
 export(int, 1, 60) var CACHE_SIZE = 1
+export var expand_size_to_parent = false
 
 export(int, "Horizontal", "Vertical") var direction = VERTICAL setget _set_direction
 var data_source = [] setget _set_data_source
@@ -85,8 +86,10 @@ func get_footer():
 func get_header():
 	return _header
 
+var	_size_calculate = null# Item to calculate the item size 
+
 func _init():
-#	connect("resized", self, "queue_update_layout")
+	connect("resized", self, "queue_update_layout")
 	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_container)
 	self._queue_updating = true
@@ -102,36 +105,33 @@ func _enter_tree():
 		if typeof(footer_template) == TYPE_OBJECT and footer_template is PackedScene:
 			_footer = footer_template.instance()
 			_container.add_child(_footer)
-	# queue_update_layout()
-	queue_update()
+	# item for item size calculate
+	if _size_calculate == null and typeof(item_template) == TYPE_OBJECT and item_template is PackedScene:
+		_size_calculate = item_template.instance()
+	queue_update_layout()
+	# queue_update()
 
 func _exit_tree():
-	# _clear()
-	pass
+	if _size_calculate != null:
+		_size_calculate.free()
+		_size_calculate = null
 
 func _set_data_source(ds):
 	data_source = ds
-	if typeof(ds) in [TYPE_ARRAY]:
-		var min_size = Vector2()
-		var space_size = (ds.size() - 1) * space
-		if space_size < 0:
-			space_size = 0
-		if direction == VERTICAL:
-			min_size = Vector2(_item_size.x, _item_size.y * ds.size() + space_size)
-			if _header:	min_size.y += _header_size.y
-			if _footer: min_size.y += _footer_size.y
-		elif direction == HORIZONTAL:
-			min_size = Vector2(_item_size.x * ds.size() + space_size, _item_size.y)
-			if _header:	min_size.x += _header_size.x
-			if _footer: min_size.x += _footer_size.x
-		_container.rect_min_size = min_size
-		_queue_updating = true
+	_queue_updating_layout = true
 
 func _set_direction(dir):
 	direction = dir
 	queue_update_layout()
 
+var override_size = Vector2()
 func _process(delta):
+	if override_size == Vector2():
+		override_size = self.rect_size
+	if expand_size_to_parent and get_parent() is Control:
+		override_size = get_parent().rect_size
+	if self.rect_size != override_size:
+		_queue_updating_layout = true
 	# update layout
 	if _queue_updating_layout:
 		_update_layout()
@@ -199,46 +199,63 @@ func _update_items(scroll):
 			
 
 func _update_layout():
-	_clear()
-	self._item_size = _calculate_item_size()
-	self.data_source = data_source
+	_update_size()
 	_alloc_cache_nodes()
-	self._queue_updating = true
 
-func _calculate_item_size():
-	var size = Vector2()
-	if typeof(item_template) == TYPE_OBJECT and item_template is PackedScene:
-		var node = item_template.instance()
-		size = node.rect_min_size
-		if node.size_flags_horizontal & Control.SIZE_EXPAND:
-			size.x = max(self.rect_size.x, size.x)
-		if node.size_flags_vertical & Control.SIZE_EXPAND:
-			size.y = max(self.rect_size.y, size.y)
-		# printt(node.size_flags_horizontal, node.size_flags_vertical, size)
-		node.free()
-	if self._header:
-		_header_size = _header.rect_min_size
-		if _header.size_flags_horizontal & Control.SIZE_EXPAND:
-			_header_size.x = max(self.rect_size.x, _header_size.x)
-		if _header.size_flags_vertical & Control.SIZE_EXPAND:
-			_header_size.y = max(self.rect_size.y, _header_size.y)
-		if _header.rect_size != _header_size:
-			_header.rect_size = _header_size
-	if self._footer:
-		_footer_size = _footer.rect_min_size
-		if _footer.size_flags_horizontal & Control.SIZE_EXPAND:
-			_footer_size.x = max(self.rect_size.x, _footer_size.x)
-		if _footer.size_flags_vertical & Control.SIZE_EXPAND:
-			_footer_size.y = max(self.rect_size.y, _footer_size.y)
-	return size
+func _update_size():
+	# update item size and footer/header size
+	if true:
+		var size = Vector2()
+		var target_size = override_size
+		if _size_calculate != null:
+			var node = _size_calculate
+			size = node.rect_min_size
+			if node.size_flags_horizontal & Control.SIZE_EXPAND:
+				size.x = max(target_size.x, size.x)
+			if node.size_flags_vertical & Control.SIZE_EXPAND:
+				size.y = max(target_size.y, size.y)
+			# printt(node.size_flags_horizontal, node.size_flags_vertical, node.rect_min_size, target_size, size)
+		if self._header:
+			_header_size = _header.rect_min_size
+			if _header.size_flags_horizontal & Control.SIZE_EXPAND:
+				_header_size.x = max(target_size.x, _header_size.x)
+			if _header.size_flags_vertical & Control.SIZE_EXPAND:
+				_header_size.y = max(target_size.y, _header_size.y)
+			if _header.rect_size != _header_size:
+				_header.rect_size = _header_size
+		if self._footer:
+			_footer_size = _footer.rect_min_size
+			if _footer.size_flags_horizontal & Control.SIZE_EXPAND:
+				_footer_size.x = max(target_size.x, _footer_size.x)
+			if _footer.size_flags_vertical & Control.SIZE_EXPAND:
+				_footer_size.y = max(target_size.y, _footer_size.y)
+		self._item_size = size
+	# update container size
+	if typeof(data_source) in [TYPE_ARRAY]:
+		var min_size = Vector2()
+		var space_size = (data_source.size() - 1) * space
+		if space_size < 0:
+			space_size = 0
+		if direction == VERTICAL:
+			min_size = Vector2(_item_size.x, _item_size.y * data_source.size() + space_size)
+			if _header:	min_size.y += _header_size.y
+			if _footer: min_size.y += _footer_size.y
+			min_size.x -= get_v_scrollbar().rect_size.x
+		elif direction == HORIZONTAL:
+			min_size = Vector2(_item_size.x * data_source.size() + space_size, _item_size.y)
+			if _header:	min_size.x += _header_size.x
+			if _footer: min_size.x += _footer_size.x
+			min_size.y -= get_h_scrollbar().rect_size.y
+		_container.rect_min_size = min_size
+	# update rect_size
+	self.rect_size = override_size
 
 func _alloc_cache_nodes():
-	# items
 	var cache_size = 0
 	if direction == VERTICAL:
-		cache_size = round(self.rect_size.y / (_item_size.y + space)) + CACHE_SIZE
+		cache_size = round(override_size.y / (_item_size.y + space)) + CACHE_SIZE
 	elif direction == HORIZONTAL:
-		cache_size = round(self.rect_size.x / (_item_size.x + space)) + CACHE_SIZE
+		cache_size = round(override_size.x / (_item_size.x + space)) + CACHE_SIZE
 	var cur_cache_size = _item_node_cache.size()
 	if cur_cache_size < cache_size:
 		_item_node_cache.resize(cache_size)
@@ -282,6 +299,6 @@ func _get_node_pos_by_index(index):
 
 func get_page_size():
 	if direction == VERTICAL:
-		return ceil(self.rect_size.y / (_item_size.y + space))
+		return ceil(override_size.y / (_item_size.y + space))
 	elif direction == HORIZONTAL:
-		return ceil(self.rect_size.x / (_item_size.x + space))
+		return ceil(override_size.x / (_item_size.x + space))
