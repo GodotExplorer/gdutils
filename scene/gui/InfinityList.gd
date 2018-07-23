@@ -30,6 +30,7 @@ tool
 extends ScrollContainer
 
 signal end_reached()
+signal begin_readched()
 
 export(PackedScene) var item_template
 export(PackedScene) var header_template
