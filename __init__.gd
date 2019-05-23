@@ -28,6 +28,7 @@
 
 tool
 extends Node
+class_name gdutils
 
 const resource = preload("resource/__init__.gd")
 const scene = preload("scene/__init__.gd")

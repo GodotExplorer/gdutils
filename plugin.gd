@@ -28,14 +28,14 @@
 
 tool
 extends EditorPlugin
+const gdutils = preload("__init__.gd")
 var tools = preload("editor/tools.gd").new()
 
 func _enter_tree():
-	add_custom_type("AsyncHttpTextureRect", "TextureRect", preload("scene/gui/AsyncHttpTextutreRect.gd"), null)
-	add_custom_type("AutoLayoutControl", "Control", preload("scene/gui/AutoLayoutControl.gd"), null)
-	add_custom_type("ItemListEnhanced", "ItemList", preload("scene/gui/ItemListEnhanced.gd"), null)
-	add_custom_type("InfinityList", "ScrollContainer", preload("scene/gui/InfinityList.gd"), null)
-	add_custom_type("GridBackground", "TextureRect", preload("scene/gui/GridBackground.gd"), null)
+	add_custom_type("AsyncHttpTextureRect", "TextureRect", gdutils.scene.gui.AsyncHttpTextutreRect, null)
+	add_custom_type("ItemListEnhanced", "ItemList", gdutils.scene.gui.ItemListEnhanced, null)
+	add_custom_type("InfinityList", "ScrollContainer", gdutils.scene.gui.InfinityList, null)
+	add_custom_type("GridBackground", "TextureRect", gdutils.scene.gui.GridBackground, null)
 
 func _ready():
 	tools.initialize(self)

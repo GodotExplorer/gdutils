@@ -1,6 +1,6 @@
 tool
 const MENUS = {
-	"Open user dir": 0,
+	"Open user://": 0,
 }
 
 func initialize(plugin):

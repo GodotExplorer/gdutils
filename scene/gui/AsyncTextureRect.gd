@@ -38,7 +38,7 @@ enum State {
 
 
 var container = CenterContainer.new()
-var state = IDLE	setget _set_state
+var state = State.IDLE	setget _set_state
 export var url = "" setget _set_url
 export(PackedScene) var progress_template = null
 var progress_node = null
