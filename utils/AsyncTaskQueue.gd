@@ -28,6 +28,7 @@
 
 tool
 var running = false
+var frame_interval = 1
 var thread = Thread.new()
 var task_queue = []
 
@@ -73,7 +74,8 @@ func thread_main(instance_id):
 				if instance != null:
 					var ret = instance.callv(task[1], task[2])
 					var callback_caller = instance_from_id(task[3])
-					callback_caller.call_deferred(task[4], ret)
+					if callback_caller:
+						callback_caller.call_deferred(task[4], ret)
 			if mutex != null:
 				mutex.unlock()
-			OS.delay_usec(1)
+			OS.delay_usec(this.frame_interval)
