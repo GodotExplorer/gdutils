@@ -27,8 +27,9 @@
 ##################################################################################
 
 tool
-const image = preload("image.gd")
+
 const GridBackgroundTexture = preload("GridBackgroundTexture.gd")
+const image = preload("image.gd")
 
 # Load text file content as string  
 # - - -  

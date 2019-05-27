@@ -7,7 +7,7 @@
 								GodotExplorer                                   
 					   https://github.com/GodotExplorer                         
 ---------------------------------------------------------------------------------
- Copyright (c) 2017-2018 Godot Explorer                                         
+ Copyright (c) 2017-2019 Godot Explorer                                         
 																				
  Permission is hereby granted, free of charge, to any person obtaining a copy   
  of this software and associated documentation files (the "Software"), to deal  
@@ -40,6 +40,7 @@ IGNORE_LIST = [
 	os.path.join(CWD, "autoloads"),
 	os.path.join(CWD, "plugin.gd")
 ]
+LIB_NAME = None
 
 def glob_path(path, pattern):
 	result = []
@@ -71,10 +72,9 @@ def main():
 def extract_dir(root):
 	if root in IGNORE_LIST:
 		return None
-	pathes = os.listdir(root)
+	pathes = sorted(os.listdir(root))
 	content = ""
 	licenseText = open(os.path.join(CWD, 'LICENSE')).read()
-
 	delayExtracs = []
 	for p in pathes:
 		path = os.path.join(root,p)
@@ -96,9 +96,9 @@ def extract_dir(root):
 		gdfile = os.path.join(root, '__init__.gd')
 		try:
 			toolprefix = '\ntool\n'
-			if root == CWD:
-				toolprefix += 'extends Node\n\n'
-			open(gdfile,'w').write(licenseText + toolprefix + content)
+			if root == CWD: toolprefix += 'extends Node\n'
+			if LIB_NAME: toolprefix += 'class_name {}\n'.format(LIB_NAME)
+			open(gdfile,'w').write(licenseText + toolprefix + "\n" + content)
 		except e:
 			raise e
 		return gdfile
