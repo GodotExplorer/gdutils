@@ -31,6 +31,7 @@ tool
 const AsyncTaskQueue = preload("AsyncTaskQueue.gd")
 const InstanceManager = preload("InstanceManager.gd")
 const ObjectPool = preload("ObjectPool.gd")
+const RandomPool = preload("RandomPool.gd")
 const TexturePacker = preload("TexturePacker.gd")
 const csv = preload("csv.gd")
 const http = preload("http.gd")
