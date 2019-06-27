@@ -1,3 +1,6 @@
+# The uuid module offers functions to generate unique id
+
+
 # MIT License
 
 # Copyright (c) 2017 Xavier Sellier

@@ -98,7 +98,7 @@ def extract_dir(root):
 			toolprefix = '\ntool\n'
 			if root == CWD: toolprefix += 'extends Node\n'
 			if LIB_NAME: toolprefix += 'class_name {}\n'.format(LIB_NAME)
-			open(gdfile,'w').write(licenseText + toolprefix + "\n" + content)
+			open(gdfile,'w').write(toolprefix + "\n" + content)
 		except e:
 			raise e
 		return gdfile

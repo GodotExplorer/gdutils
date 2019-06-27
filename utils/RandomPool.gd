@@ -1,5 +1,6 @@
-tool
+# A random pool to select random items in the pool with weight support
 
+tool
 class RandomItem:
 	var weight: float = 1
 	var start: float = 0

@@ -1,3 +1,5 @@
+# Simple tool to pack images into an atlas
+
 tool
 const json = preload("json.gd")
 
