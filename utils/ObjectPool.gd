@@ -18,6 +18,13 @@ func get_using_count() -> int:
 			count += 1
 	return count
 
+func get_using_objects():
+	var ret = []
+	for i in _using_objects:
+		if _using_objects[i]:
+			ret.append(objects[i])
+	return ret
+
 # Set the pool size
 func resize(v: int):
 	if v >= 0:
@@ -66,8 +73,6 @@ func clear():
 # Destroy all of the objects in the pool
 func destroy():
 	clear()
-	for obj in objects:
-		destroy_object(obj)
 	resize(0)
 	_using_objects = {}
 
@@ -82,4 +87,7 @@ func release_object(p_object: Object):
 # The method to override to destroy object for the pool
 func destroy_object(p_object: Object):
 	if not p_object is Reference:
-		p_object.free()
+		if p_object is Node and p_object.is_inside_tree():
+			p_object.queue_free()
+		else:
+			p_object.free()
